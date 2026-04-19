@@ -1,353 +1,248 @@
-# COM2058 Project — Multi-Tenant Project Management SaaS ("TaskNest")
+# COM2058 Project — TaskNest (Final Refined Plan v2)
 
 ## Context
+Ankara University COM2058 dönem projesi. Solo öğrenci. Multi-tenant project management SaaS "TaskNest". MySQL 8 + FastAPI + Jinja2 + HTMX + asyncmy (raw SQL, no ORM). Müfredat: Elmasri 6e Ch01-09, Ch15, Ch21-23.
 
-Ankara University COM2058 dönem projesi. Ödev: relational DB üzerine real-world bir uygulama tasarlamak ve geliştirmek; ER modeling, relational schema, query operations konularını göstermek (PDF: `docs/COM2058_Project.pdf`).
-
-Kullanıcı **solo** çalışıyor. Domain seçimi: **Multi-tenant N:N rich SaaS**. Stack: **Python + FastAPI + Jinja2 + HTMX** (mevcut MySQL 8 + Docker setup'ı üzerine).
-
-**Ürün: "TaskNest"** — küçük takımlar için multi-tenant proje yönetim SaaS (Linear/Asana mini). Workspace = tenant. Bu domain, dersin müfredatındaki tüm kavramları doğal şekilde barındırır.
+**Teslimler:** Phase 1+2 (10%+20%) → 26.04.2026 (7 gün), Phase 3 (60%) + Phase 4 (10%) → 24.05.2026 (35 gün).
 
 ---
 
-## Ders Coverage Haritası (KRİTİK)
+## Akademik Hedefler — Müfredat → Proje Eşlemesi
 
-`lecture_presentations/Elmasri_6e_Ch*.ppt` içeriklerinden çıkarılan ders sırası ve ödevdeki karşılığı:
-
-| Ch | Konu | Projede Nerede Gösterilecek |
-|----|------|------------------------------|
-| 01 | Database & DBMS basics | Report intro |
-| 02 | DBMS architecture (3-schema, client/server) | Report architecture section |
-| 03 | Relational data model + integrity constraints (PK/FK/CASCADE/NOT NULL/UNIQUE/CHECK) | Schema DDL'de explicit hepsi |
-| 04 | Basic SQL (CREATE/SELECT/INSERT/UPDATE/DELETE, joins, WHERE) | App'in tüm CRUD query'leri |
-| 05 | More SQL (aggregate, GROUP BY/HAVING, VIEW, TRIGGER, ASSERTION, ALTER) | `init/02_views.sql`, `init/03_triggers.sql`, ASSERTION report'ta |
-| 06 | Relational algebra (σ, π, ⋈, ÷, ∪, ∩, −) | Report'ta 5-7 query için RA notasyonu |
-| 07 | ER model: entity, weak entity, identifying relationship, recursive, binary/ternary, cardinality, participation | ER diagram'ın gövdesi |
-| 08 | EER: specialization/generalization, disjoint/overlap, total/partial, attribute-defined subclass, category (union), aggregation | `attachments` specialization, `time_logs` aggregation, ER diagram'a explicit eklenecek |
-| 09 | ER→relational mapping algoritması | Report'ta adım adım mapping anlatımı |
-| 15 | Normalization: FD, 1NF→BCNF, 4NF (MVD), 5NF (JD), dependency preservation, lossless join | Report'ta her tablo için FD listesi + BCNF kanıtı; bir karşı örnek (denormalized) walk-through |
-| 21 | Transaction processing, ACID, serializability, schedule recoverability | App'te explicit `BEGIN/COMMIT` + report'ta isolation level analizi |
-| 22 | Concurrency control (locking, deadlock, 2PL) | `SELECT ... FOR UPDATE` demo; report'ta MySQL InnoDB locking |
-| 23 | Recovery (deferred update, ARIES, checkpoint, backup) | `mysqldump` backup/restore demo + report'ta MySQL binlog/redo log notu |
-
-**Sonuç:** Müfredat geniş; proje bunlar için yeterli "yüzey alanı" sunmalı. Plan buna göre güncellendi.
+| Ch | Konu | Projedeki Karşılık |
+|---|---|---|
+| 01-02 | DBMS, 3-schema | Report intro (1p) |
+| 03 | Integrity constraints | DDL'de PK/FK/CASCADE/SET NULL/RESTRICT/CHECK/UNIQUE/NOT NULL hepsi |
+| 04 | Basic SQL | App'in tüm CRUD query'leri |
+| 05 | Aggregates, GROUP BY/HAVING, VIEW, TRIGGER, CREATE ASSERTION | `02_views.sql`, `03_triggers.sql`, ASSERTION report'ta |
+| 06 | RA: σ π ⋈ ÷ ∪ ∩ − × γ ρ | Report'ta 12 query, **DIVISION dahil** |
+| 07 | Entity, weak, identifying, recursive, ternary, cardinality, participation, composite/multivalued/derived | ER diagram'ın gövdesi |
+| 08 | EER: specialization (disjoint+total VE overlapping+partial), category (union), aggregation, hierarchy/lattice | 3 farklı specialization tipi + 1 category + 1 aggregation + 1 lattice |
+| 09 | ER→Relational mapping (7+EER opsiyonları) | Report'ta adım adım |
+| 15 | 1NF→2NF→3NF→BCNF + 4NF (MVD) | Report'ta 1 tablo full walkthrough + 4NF MVD justification |
+| 21 | Transactions, ACID, isolation | Two-session demo (dirty/non-repeatable/phantom) |
+| 22 | 2PL, locks, deadlock | `SELECT FOR UPDATE` demo + `SHOW ENGINE INNODB STATUS` |
+| 23 | Recovery | Binlog point-in-time recovery (15 min walkthrough) |
 
 ---
 
-## Teslim Tarihleri
+## Final Şema (14 tablo + 4 specialization sub-table)
 
-| Phase | İçerik | Tarih | Bugünden |
-|-------|--------|-------|----------|
-| 1 | Data Requirements (10%) | 26.04.2026 | **7 gün** |
-| 2 | ER Diagram (20%) | 26.04.2026 | **7 gün** |
-| 3 | Implementation + Demo (60%) | 24.05.2026 | 35 gün |
-| 4 | Report 10-15 sayfa (10%) | 24.05.2026 | 35 gün |
+**Cuts:** notifications (filler), dependency UI (table+seed kalır), tags UI, file upload (metadata only).
 
-İlk hafta Phase 1+2 (en kritik: ER diagram doğru olmadan implementation çürür). Sonraki 4 hafta implementation + report paralel.
+| # | Entity | Tip | Konsept |
+|---|--------|-----|---------|
+| 1 | `users` | **EER overlapping+partial specialization superclass** | Ch08 |
+| 1a-c | `internal_users` / `external_users` / `bot_users` | predicate-defined, overlapping, partial subclasses | Ch08 |
+| 2 | `workspaces` | composite attribute (address: street/city/country/postal) | Ch07 |
+| 3 | `workspace_members` | M:N + role | Ch07 |
+| 4 | `projects` | UNIQUE (workspace_id, project_id) | Ch07 |
+| 5 | `project_members` | FK → `workspace_members.wm_id` (NOT user_id — tenant safety) | Ch07 |
+| 6 | `task_statuses` | workspace-scoped lookup (drop ENUM) | Ch15 lookup table benefit |
+| 7 | `sprints` | nullable FK to project | Ch07 (1:N + nullable participation) |
+| 8 | `tasks` | recursive `parent_task_id` + composite FK `(workspace_id, project_id)` | Ch07 + Ch15 controlled denorm |
+| 9 | `task_dependencies` | M:N recursive (table+seed only, no UI) | Ch07 |
+| 10 | `task_assignees` | M:N | Ch07 |
+| 11 | `tags` | UNIQUE (workspace_id, name) | Ch07 |
+| 12 | `task_tags` | M:N — multivalued attr → relation | Ch07 + Ch15 (1NF) |
+| 13 | `comments` | **weak entity** PK (task_id, comment_no), self-FK `parent_comment_id` (threading) | Ch07 (weak + recursive) |
+| 14 | `attachments` | **EER disjoint+total specialization superclass** | Ch08 |
+| 14a | `attachment_file` | subclass | Ch08 |
+| 14b | `attachment_image` | **2-level lattice** (inherits from `attachments` AND `attachment_file`) | Ch08 hierarchy |
+| 14c | `attachment_link` | subclass | Ch08 |
+| 15 | `time_logs` | ternary (User × Task × Date) — alternatif: aggregation form | Ch07 ternary / Ch08 aggregation |
+| 16 | `mentions` | **EER category** (User ∪ Tag ∪ Project) — discriminator + exactly-one-FK CHECK | Ch08 union |
+| 17 | `activity_log` | polymorphic (entity_type, entity_id) — report'ta normalization risk | Ch15 trade-off |
 
----
+### EER Konsept Yerleşimi
+- **Specialization 1 (disjoint+total):** `attachments` — Elmasri Ch09 Option 8B (super + sub tables). Composite FK `(attachment_id, attachment_type)` ile DB-level disjointness.
+- **Specialization 2 (overlapping+partial, predicate-defined):** `users.kind` ile internal/external/bot.
+- **Category (union):** `mentions` — supertypes farklı keylere sahip (User, Tag, Project).
+- **Aggregation:** `(user — assigned-to — task)` aggregate; `time_logs` aggregate→Date.
+- **Hierarchy/Lattice:** `attachment_image` hem `attachments` hem `attachment_file`'dan inherit (2-level).
 
-## Domain: TaskNest — Genişletilmiş Şema
-
-### Entity List (15 tablo + 3 EER specialization sub-table)
-
-| # | Entity | Tip | Kullanılan Konsept (Ch) |
-|---|--------|-----|-------------------------|
-| 1 | `users` | Strong entity | Ch07 |
-| 2 | `workspaces` | Strong entity, **composite attribute** (address: street/city/country/postal) | Ch07 |
-| 3 | `workspace_members` | **Associative (M:N + role attribute)** | Ch07 |
-| 4 | `projects` | Strong entity | Ch07 |
-| 5 | `project_members` | **Associative (M:N + role)** | Ch07 |
-| 6 | `tasks` | Strong + **recursive (parent_task_id)** | Ch07 |
-| 7 | `task_dependencies` | **Recursive M:N** (task ↔ task as DAG, "blocks" relationship) | Ch07 |
-| 8 | `task_assignees` | **Associative (M:N)** | Ch07 |
-| 9 | `tags` | Strong (workspace-scoped) | Ch07 |
-| 10 | `task_tags` | **Associative (M:N)** — multi-valued attribute → relation | Ch07 + Ch15 (1NF) |
-| 11 | `comments` | **Weak entity** (PK: task_id + comment_no), identifying relationship to tasks | Ch07 |
-| 12 | `attachments` | **EER Specialization superclass** (disjoint, total) | Ch08 |
-| 12a | `attachment_image` | Subclass — width, height, mime_type | Ch08 |
-| 12b | `attachment_file` | Subclass — file_size, mime_type, storage_path | Ch08 |
-| 12c | `attachment_link` | Subclass — url, preview_text | Ch08 |
-| 13 | `time_logs` | **Ternary relationship** (User × Task × Date) — log_date partial key, hours_logged | Ch07 (ternary), Ch08 (aggregation candidate) |
-| 14 | `activity_log` | Audit (Strong, but conceptually aggregates events from multiple sources) | Ch08 (aggregation in ER), Ch21 (transaction trigger) |
-| 15 | `notifications` | Strong (user_id FK, type enum, read_at) | Ch04 demo |
-
-### EER Konseptleri — Explicit Yerleşim
-
-1. **Specialization (disjoint, total):** `attachments` → 3 alt sınıf. Discriminator: `attachment_type` enum. Sub-tablolar PK = parent attachment_id (FK). Bu mapping Ch09'un "Option 8B - Multiple relations, superclass and subclasses" yöntemini gösterir.
-2. **Generalization (bottom-up):** Report'ta `attachment_image/file/link` → `attachments` süreci anlatılacak.
-3. **Aggregation:** `(workspace_member, project)` ilişkisi `project_team` olarak aggregate edilir (kavramsal); `time_logs` semantik olarak `(user assigned-to task)` aggregate'ine bağlı log'tur.
-4. **Category / Union (opsiyonel, report'ta gösterilecek):** `mention` ER'de `MentionTarget` ⊃ User ∪ Tag (User ya da Tag mention edilebilir) — implementasyonda iki nullable FK ile çözülecek; report'ta "category" alternatifi tartışılacak.
-
-### Relational Constraints (Ch03 — Schema'da explicit göstereceğimiz tipler)
-
-- **Domain constraints**: ENUM('owner','admin','member','guest'), CHECK (hours_logged BETWEEN 0 AND 24)
-- **Key constraints**: PRIMARY KEY her tabloda
-- **Entity integrity**: NOT NULL on PK
-- **Referential integrity**: ON DELETE CASCADE / SET NULL / RESTRICT — her FK'da bilinçli seçim
-- **CHECK constraints**: tarih ilişkileri (started_at <= completed_at), pozitif sayılar
-- **UNIQUE constraints**: email, workspace.slug, (workspace_id, slug) project'te
-- **CREATE ASSERTION** (MySQL desteklemez ama report'ta gösterilecek): "her workspace'in en az bir owner'ı olmalı"
-
-### Normalization Demo (Ch15)
-
-Phase 1 doc'unda her tablo için:
-- Functional dependencies listesi
-- Candidate key(s)
-- Hangi NF'de olduğu kanıtı (3NF veya BCNF hedef)
-- BONUS: bir denormalized antipattern (örn. tasks tablosuna `assignees CSV` koymak) → 1NF ihlali → çözüm `task_assignees` tablosu. Bu tek örnek bile Ch15 anlayışını sergiler.
-
----
-
-## Adım Adım Plan (10 adım)
-
-Kullanıcı **adım adım** ilerlemek istiyor. Her adım bağımsız doğrulanır.
-
-### Adım 1 — Phase 1: Data Requirements Doc (1-2 gün)
-
-**Çıktı:** `docs/phase1_data_requirements.md`
-
-İçerik:
-1. **Sistem amacı + scope** (1 paragraf)
-2. **Aktör listesi**: Owner, Admin, Member, Guest, Bot/Service Account
-3. **Functional requirements** (FR-1 .. FR-N, ~25 madde)
-4. **Data requirements**: her entity için açıklama + öznitelikler + business rules (örn. "bir task'a en az bir assignee olmalı")
-5. **Constraints / assumptions**: multi-tenancy, soft delete, audit, tarih formatı, locale
-6. **FD listesi + normalization analizi** (Ch15 alignment)
-
-**Doğrulama:** Doc kullanıcı tarafından okunup onaylanır.
-
-### Adım 2 — Phase 2: ER + EER Diagram (2-3 gün)
-
-**Çıktılar:**
-- `docs/phase2_er_diagram.drawio` (kaynak)
-- `docs/phase2_er_diagram.png` (sunum export)
-- `docs/phase2_er_explanation.md` (her diyagram elemanını numaralı açıklama — sunum notu)
-
-**Notation:** Elmasri kitap stili **Chen notation** (kitabın Ch07-08'i bunu kullanıyor). Crow's foot opsiyonel ek diyagram olabilir.
-
-**Diagram'da explicit gösterilecek:**
-- Entity dikdörtgenleri (zayıf entity için **çift çerçeve**)
-- İlişki eşkenar dörtgenleri (identifying relationship için **çift dörtgen**)
-- Cardinality (1, M, N) her ilişkide
-- Participation (zorunlu = çift çizgi, opsiyonel = tek çizgi)
-- Composite attribute (oval altında alt-oval'lar — workspace.address)
-- Multi-valued attribute (önce çift oval, sonra → "1NF için relation'a çevrildi" notu)
-- Recursive relationship (tasks → tasks "subtask of"; tasks → tasks "blocks")
-- Ternary relationship (User × Task × Date için time_logs)
-- **EER**: attachments specialization (disjoint, total) — ⊂ sembolü, "d" disjoint discriminator, çift çizgi total
-- **EER**: aggregation kutu (opsiyonel, report'ta açıklanacak)
-
-**Doğrulama:** Diagram'da tüm 15 entity + 4 EER unsuru görünür ve okunabilir.
-
-### Adım 3 — Relational Schema → SQL DDL (1 gün)
-
-**Çıktı:** `init/01_schema.sql` — mevcut `lab4.sql` ve `tv_rankings.sql` style ile uyumlu. Mevcut MySQL Docker container `docker-entrypoint-initdb.d` mekanizmasıyla otomatik yükler. `init/lab4.sql` ve `init/tv_rankings.sql` olduğu gibi kalır.
-
-DDL'de gösterilecekler:
-- Tüm constraint tipleri (Ch03)
-- ER→Relational mapping yorumları (Ch09 algoritmasına atıf, "Step 1-7" yorum satırları)
-- Index'ler (öğretici amaçlı, EXPLAIN ile gösterileceği için)
-
-**Doğrulama:**
-```bash
-docker compose down -v && docker compose up -d
-docker exec com2058 mysql -uberkkirik -p25812633 com2058 -e "SHOW TABLES;"
-docker exec com2058 mysql -uberkkirik -p25812633 com2058 -e "SHOW CREATE TABLE tasks\G"
+### Multi-Tenant Denormalization (Ch15 Trade-off)
+`workspace_id` → tasks/comments/attachments/time_logs/activity_log'a denormalize, composite FK ile drift engellenir:
+```sql
+ALTER TABLE projects ADD UNIQUE KEY (workspace_id, project_id);
+ALTER TABLE tasks
+  ADD COLUMN workspace_id BIGINT NOT NULL,
+  ADD FOREIGN KEY (workspace_id, project_id) REFERENCES projects(workspace_id, project_id);
 ```
-15+ tablo görünmeli; FK constraint'ler `INFORMATION_SCHEMA.KEY_COLUMN_USAGE` ile doğrulanır.
-
-### Adım 4 — Views, Triggers, Seed Data (1-2 gün)
-
-**Çıktılar:**
-- `init/02_views.sql` — 5-7 view: `v_project_progress`, `v_user_workload`, `v_workspace_activity`, `v_overdue_tasks`, `v_top_tags`, `v_team_velocity`
-- `init/03_triggers.sql` — 3 trigger:
-  - `trg_task_status_change` → activity_log'a satır ekler (Ch05)
-  - `trg_comment_no_assign` → comments'a yeni satır eklenirken `comment_no` auto-increment (weak entity partial key) (Ch07)
-  - `trg_time_log_validate` → 24 saatten fazla log'u engeller (CHECK alternatifi)
-- `init/04_seed.sql` — gerçekçi veri (3 workspace, 15 user, 10 proje, ~80 task, ~200 comment, ~50 time_log, 30 attachment her 3 tipten)
-
-**Doğrulama:** Her view manuel sorgulanır; trigger task INSERT/UPDATE'te activity_log'a satır eklendiği test edilir.
-
-### Adım 5 — FastAPI Scaffold (1 gün)
-
-**Çıktı:** `app/` klasörü
-```
-app/
-  main.py            # FastAPI app + lifespan + router include
-  db.py              # asyncmy connection pool
-  config.py          # Pydantic Settings (env vars)
-  deps.py            # current_user, current_workspace dependencies
-  routers/
-    auth.py
-    workspaces.py
-    projects.py
-    tasks.py
-    analytics.py
-  queries/           # raw SQL files
-    workspaces.sql
-    projects.sql
-    tasks.sql
-    users.sql
-    analytics.sql
-  templates/
-    base.html        # HTMX + Tailwind CDN
-    partials/
-    pages/
-  static/
-    style.css
-requirements.txt
-Dockerfile
-```
-
-`docker-compose.yml` güncellenir: `app` servisi eklenir (port 8000).
-
-**Önemli karar — ORM YOK:** `asyncmy` ile raw SQL parametrik. Bu, ders konseptlerinin görünürlüğü için kritik. Query'ler `app/queries/*.sql` altında dosya olarak tutulur (lab2 query exercises stili ile uyumlu).
-
-**Doğrulama:** `docker compose up app` → `GET /health` 200 döner; DB bağlantısı (`SELECT 1`) loglanır.
-
-### Adım 6 — Auth + Multi-Tenant Middleware (1 gün)
-
-- Email + password (bcrypt hash) ile cookie session (`itsdangerous`)
-- `current_workspace` dependency: URL slug'dan çözer (`/w/{slug}/...`)
-- Her DB query'de workspace_id WHERE filtresi (tenant izolasyonu)
-
-**Doğrulama:** İki workspace seed edilip cross-tenant erişimin 403 döndüğü manuel test edilir.
-
-### Adım 7 — Core CRUD Sayfaları (4-5 gün)
-
-HTMX server-rendered partial swap. Sayfa setleri:
-- Workspace dashboard (üye + proje listesi)
-- Project board (task listesi, status filtre, sürükle-bırak yerine status dropdown)
-- Task detail (subtask, dependency, comment, assignee, tag, attachment, time log)
-- User profile (workspaces I'm in)
-
-**Doğrulama:** E2E akış (browser): register → workspace oluştur → 2. user davet → proje aç → task ekle → assign et → comment yap → tag ekle → attachment yükle → subtask oluştur → time log gir.
-
-### Adım 8 — Analytics + Transaction Demo (1-2 gün)
-
-Analytics sayfası DB view'larını UI'a bağlar. Her panel altında "Show SQL" linki ile ham query gösterilir (sunum altın madeni).
-
-**Transaction demo (Ch21):** "Move task to another project" işlemi explicit `BEGIN; UPDATE tasks; INSERT activity_log; UPDATE project_progress; COMMIT;` ile yapılır. Failure path'i (ROLLBACK) test edilir.
-
-**Concurrency demo (Ch22, opsiyonel):** "Claim task" (atomic assign) için `SELECT ... FOR UPDATE` kullanılır. Report'ta deadlock senaryosu anlatılır.
-
-### Adım 9 — Phase 4: Report (10-15 sayfa, 3-4 gün)
-
-**Çıktı:** `docs/phase4_report.pdf`
-
-İskelet (her bölüm dersteki bir Ch'a atıf yapacak):
-1. **Introduction & motivation** (1 sayfa) → Ch01
-2. **System architecture** (1 sayfa, 3-schema diagram) → Ch02
-3. **Data requirements summary** (1 sayfa) → Phase 1 özeti
-4. **ER & EER diagram + design rationale** (2-3 sayfa) → Ch07-08
-5. **ER→Relational mapping** (Ch09 algoritması adım adım, 7 step) (2 sayfa)
-6. **Schema constraints + normalization** (her tablo BCNF kanıtı + 1 denormalized counter-example) (1-2 sayfa) → Ch03 + Ch15
-7. **Sample queries** (5-7 query: SQL + RA notasyonu + EXPLAIN çıktısı) (2-3 sayfa) → Ch04-06
-8. **Triggers, views, transactions** (1 sayfa) → Ch05, Ch21
-9. **Application screenshots + tech stack** (1-2 sayfa)
-10. **Concurrency & recovery notes** (½ sayfa, kısa) → Ch22-23
-11. **Conclusion + future work** (½ sayfa)
-
-Markdown → Pandoc → PDF.
-
-### Adım 10 — Sunum + Demo Hazırlığı (1-2 gün)
-
-- 12-15 slayt deck (Ch7 ER + Ch8 EER + canlı demo + analytics + transaction demo)
-- Demo akışı prova
-- Backup screenshot'lar
-- Q&A için anticipated questions list (ER kararları, neden raw SQL, neden multi-tenant)
+Kontrollü 3NF ihlali — Ch15 trade-off bölümünün gold içeriği.
 
 ---
 
-## Kritik Dosyalar
+## RA Query Listesi (12 query, hepsi farklı operatör)
 
-| Yol | Durum | İçerik |
-|-----|-------|--------|
-| `docs/COM2058_Project.pdf` | mevcut | Ödev metni |
-| `docs/phase1_data_requirements.md` | yeni | Phase 1 teslim |
-| `docs/phase2_er_diagram.drawio` + `.png` + `_explanation.md` | yeni | Phase 2 teslim |
-| `init/01_schema.sql` | yeni | DDL |
-| `init/02_views.sql` | yeni | Analytics views |
-| `init/03_triggers.sql` | yeni | Triggers |
-| `init/04_seed.sql` | yeni | Demo data |
-| `app/` (yapısı yukarıda) | yeni | FastAPI uygulaması |
-| `docker-compose.yml` | güncellenecek | `app` servisi eklenecek |
-| `docs/phase4_report.md` + `.pdf` | yeni | Final rapor |
+| # | Query | RA |
+|---|-------|----|
+| 1 | Workspace W'deki açık task'lar | σ, π |
+| 2 | Task + assignee isimleri | ⋈ equi-join |
+| 3 | Atanmamış task'lar | ⟕ left outer + σ IS NULL |
+| 4 | Yorumlanmış task'lar | ⋉ semi-join |
+| 5 | **Workspace'teki TÜM projelere atanmış kullanıcılar** | **÷ DIVISION** |
+| 6 | Workspace A'da olup B'de olmayan kullanıcılar | − difference |
+| 7 | Yorum yazmış VEYA atanmış kullanıcılar | ∪ union |
+| 8 | Yorum yazmış VE atanmış kullanıcılar | ∩ intersection |
+| 9 | Proje başına task sayısı + ort. saat | γ aggregate |
+| 10 | Birbirini bloklayan task'lar | ρ rename + θ-join |
+| 11 | Tüm (user, role_template) çiftleri | × cartesian |
+| 12 | tasks ⋈ projects ⋈ workspaces | ⋈ natural join |
 
-Mevcut korunacaklar: `init/lab4.sql`, `init/tv_rankings.sql`, `lecture_presentations/`, `.gitignore`, `.env`.
-
----
-
-## Stack Seçimleri (kesinleşmiş)
-
-- **DB:** MySQL 8.0 (mevcut Docker)
-- **Backend:** Python 3.11+, FastAPI, uvicorn (asgi)
-- **DB Driver:** `asyncmy` — raw SQL, parametrik
-- **Validation:** Pydantic v2
-- **Templates:** Jinja2 + HTMX (CDN) + Tailwind CSS (CDN, build step yok)
-- **Auth:** `itsdangerous` cookie session + `bcrypt`
-- **Migration:** Yok — `init/*.sql` re-runnable script'ler (eğitim odaklı, `down -v && up`)
-- **Containerization:** `docker-compose.yml` `app` servisi eklenecek
+Query #5 (DIVISION) üç şekilde sunulur: SQL `NOT EXISTS … NOT EXISTS`, RA notation, English. A vs B notu farkı genellikle bu query'dir.
 
 ---
 
-## Verification Plan (Per-Step)
+## Normalization Walkthrough (Ch15)
 
-```bash
-# Adım 3 (schema) sonrası
-docker compose down -v && docker compose up -d
-docker exec com2058 mysql -uberkkirik -p25812633 com2058 -e "SHOW TABLES;"
-docker exec com2058 mysql -uberkkirik -p25812633 com2058 -e "
-  SELECT TABLE_NAME, COUNT(*) AS fk_count FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
-  WHERE TABLE_SCHEMA='com2058' AND REFERENCED_TABLE_NAME IS NOT NULL
-  GROUP BY TABLE_NAME;
-"
+Report'ta 1 tablo üzerinden **1NF→2NF→3NF→BCNF** explicit FD listesi ile yürünür. Başlangıç: kasten kötü design (assignee_names CSV + role partial dependency).
 
-# Adım 4 (views/triggers) sonrası
-docker exec com2058 mysql -uberkkirik -p25812633 com2058 -e "
-  SHOW TRIGGERS;
-  SELECT TABLE_NAME FROM INFORMATION_SCHEMA.VIEWS WHERE TABLE_SCHEMA='com2058';
-  SELECT * FROM v_project_progress LIMIT 5;
-"
+**4NF (MVD):** `task_tags` ve `task_assignees` neden ayrı — `task_id →→ tag_id | task_id →→ user_id` MVD'si.
+**`workspace_id` denormalization:** kontrollü 3NF ihlali tartışması.
 
-# Adım 5+ (app) sonrası
-docker compose up -d
-curl http://localhost:8000/health
-
-# Adım 7 (CRUD) — manuel browser E2E
-# register → workspace → project → task → comment → tag → attachment → subtask → time log
-
-# Adım 8 (transaction) — Python REPL veya pytest
-# 1. transaction commit ok
-# 2. transaction rollback (force exception) → state unchanged
-
-# Final (Adım 10)
-mysqldump -u root -p com2058 > backup.sql  # Ch23 demo
-```
+5NF/JD skip.
 
 ---
 
-## Riskler & Karar Noktaları
+## Transaction & Concurrency Demo (Ch21-22)
 
-| # | Risk | Karar |
-|---|------|-------|
-| 1 | ORM mı raw SQL mi? | **Raw SQL** — ders konseptleri görünür, report'ta query verme kolay |
-| 2 | Auth scope? | Basit cookie session — JWT/OAuth scope'a gereksiz |
-| 3 | Multi-tenancy modeli? | Shared schema, shared DB — workspace_id WHERE her query'de |
-| 4 | EER specialization gerçekten implement mi yoksa sadece diyagramda mı? | **Implement edilecek** (3 sub-table) — Ch08 puanı için |
-| 5 | Ternary relationship gerekli mi? | **Evet** — Ch07 explicit konsept; `time_logs` doğal |
-| 6 | Concurrency demo (FOR UPDATE) gerekli mi? | Opsiyonel — 35 günde yetişiyorsa Adım 8'e dahil |
-| 7 | Sunum dilini ne yapacağız? | Türkçe (kullanıcı belirleyecek) |
-| 8 | ER notation: Chen vs Crow's foot? | Chen birincil (kitap stili), Crow's foot opsiyonel ek |
+`docs/phase4_concurrency_demo.md` two-session terminal transcript:
+1. Dirty read (READ UNCOMMITTED)
+2. Non-repeatable read (READ COMMITTED)
+3. Phantom prevention (REPEATABLE READ — InnoDB gap lock)
+4. Deadlock (`SHOW ENGINE INNODB STATUS\G`)
+5. `SELECT ... FOR UPDATE` atomic claim
+
+`SELECT FOR UPDATE` mandatory.
 
 ---
 
-## Sonraki Adım
+## Recovery (Ch23) — Binlog PITR
+Enable binlog → INSERT → mysqldump → INSERT more → DROP DB → restore dump → `mysqlbinlog` replay to timestamp. Half page in report. ARIES sadece cite.
 
-Plan onaylanırsa: **Adım 1 — Phase 1 Doc** ile başlıyoruz. Önce kullanıcıya sorulacak son detaylar:
-- Ürün adı "TaskNest" sana uyuyor mu?
-- ER diagram aracı: draw.io (offline desktop) mı, dbdiagram.io (web, DBML) mı?
-- Sunum dili Türkçe mi İngilizce mi?
+---
 
-Sonra `docs/phase1_data_requirements.md` yazılır.
+## 10 Adım — Zaman Çizelgesi
+
+Solo ~3-4 saat/gün ≈ 17-20 efektif gün. Buffer near zero.
+
+| # | Adım | Gün | Tarih | Notlar |
+|---|------|-----|-------|--------|
+| 1 | Phase 1 doc (MVP — FD analizi report'a ertelenir) | 1-2 | 19-20 Apr | Sistem amacı, aktör, FR, entity desc, business rules, "Out-of-Scope" |
+| 2 | Phase 2 ER+EER diagram (drawio, Chen notation) | 2-3 | 21-23 Apr | 14 entity + 4 spec subtable |
+| 3 | DDL `init/01_schema.sql` | 1 | 24 Apr | Tüm constraint tipleri + ER→Relational yorum satırları |
+| 4 | Views + Triggers + Seed (3 view, 3 trigger) | 1-2 | 25-26 Apr | **Phase 1+2 deadline 26 Apr** |
+| 5 | FastAPI scaffold + asyncmy pool + tenant helper | 1 | 27 Apr | `tenant_query()` helper + 2 cross-tenant pytest test |
+| 6 | Auth + multi-tenant middleware | 1 | 28 Apr | bcrypt + cookie session |
+| 7 | **Vertical slice (tasks end-to-end)** | 3 | 29 Apr - 1 May | 5 entity + 2 sayfa |
+| 7b | Diğer entity sayfaları | 3 | 2-4 May | Vertical slice template'i kopyala |
+| 8 | Analytics + transaction demo + concurrency demo | 1-2 | 5-6 May | "Show SQL" linki |
+| 9 | **Report 1-6. bölümler (paralel başlar)** | 5 | **7-11 May** | Phase 1+2 doc'larından çoğu hazır |
+| 9b | Report 7-11. bölümler | 4 | 12-15 May | |
+| 10 | Demo prova + slide + screencast backup | 2 | 16-17 May | 8 dakikalık akış |
+| - | Buffer / polish | 7 | 18-24 May | Slippage absorbed |
+
+Kritik kural: Report yazımı 4 May'den önce başlamalı.
+
+---
+
+## Cut List (Ruthless)
+
+1. notifications table
+2. Drag-drop task board (status dropdown yeterli)
+3. Crow's foot alternatif diagram
+4. Tag management UI (seed yeterli, table+M:N kalır)
+5. Task dependency UI (table+seed+1 query, no UI)
+6. Workspace invite flow (2 workspace pre-seeded)
+7. File upload multipart (metadata only, fake storage_path)
+8. HTMX her yerde (sadece task list filter + comment add)
+9. 5-7 view → 3 view (`v_project_progress`, `v_user_workload`, `v_overdue_tasks`)
+10. Pydantic Settings + ayrı bcrypt + ayrı itsdangerous (single auth.py)
+
+---
+
+## Top 3 Hidden Risks + Mitigation
+
+1. **Multi-tenant `workspace_id` filter unutulması = veri sızıntısı.** → Day 1'de `tenant_query()` helper + 2 pytest cross-tenant test.
+2. **Weak entity `comments.comment_no` autonumber concurrent insert duplicate-key.** → Trigger içinde `SELECT MAX(comment_no) FOR UPDATE` + explicit transaction. Bonus: report'ta Ch22 örneği olarak kullan.
+3. **HTMX form validation rendering 2 gün yutar.** → Bir kez task formu için yap, copy-paste. Macro template.
+
+---
+
+## Phase 1+2 MVP (26 Apr için)
+
+**Phase 1 doc (`docs/phase1_data_requirements.md`):**
+- Sistem amacı + scope (½ p)
+- Aktörler + 15-20 FR (1 p)
+- Entity descriptions + attributes + business rules (3-4 p)
+- Constraints/assumptions + Out-of-Scope section (½ p)
+- FD/normalization analizi → Phase 4 report'a ertelendi
+
+**Phase 2 ER diagram:**
+- 14 entity + 4 spec subtable
+- Cardinality + participation EVERY relationship
+- Weak entity çift çerçeve (comments)
+- Identifying relationship çift dörtgen
+- Ternary (time_logs)
+- Recursive (tasks self, comments self, task_dependencies)
+- 2 specialization (disjoint+total: attachments; overlapping+partial: users)
+- Category (mentions ∪ sembolü)
+- Aggregation box (user-assigned-to-task)
+- Composite attribute (workspace.address)
+
+---
+
+## Vertical Slice Definition (Adım 7 — ilk 3 gün)
+
+**5 entity:** users, workspaces, projects, tasks, comments + auth.
+**2 sayfa:** project board, task detail (comment add).
+Yeşil olmadan diğer entity'lere geçme.
+
+Yeşil tanımı:
+- Register → workspace oluştur → proje oluştur → task ekle → comment ekle akışı browser'da çalışıyor
+- Cross-tenant pytest test geçiyor
+- Comment trigger activity_log'a satır ekliyor
+
+---
+
+## Demo Flow (8 dakika max)
+
+login → workspace dashboard → project board (filter) → task detail aç → comment ekle → attachment ekle (EER) → time log (ternary) → analytics (3 view + "Show SQL" buton) → 2-session concurrency demo (dirty read).
+
+Backup: Day 33'te 5 dakikalık screencast.
+
+---
+
+## Critical Files
+
+| Path | İçerik |
+|------|--------|
+| `docs/phase1_data_requirements.md` | Phase 1 MVP teslim |
+| `docs/phase2_er_diagram.drawio` + `.png` | Phase 2 teslim |
+| `docs/phase2_er_explanation.md` | Diagram element açıklamaları |
+| `init/01_schema.sql` | DDL — composite FK, specialization Option 8B, lattice |
+| `init/02_views.sql` | 3 view |
+| `init/03_triggers.sql` | comment_no autonumber, activity_log auto-insert, time_log validation |
+| `init/04_seed.sql` | Seed data |
+| `app/deps.py` | tenant_query helper (KRİTİK) |
+| `app/queries/*.sql` | Raw SQL files |
+| `docs/phase4_report.md` (10-15 p) | ER 4p + mapping 2p + normalization 2p + queries+RA 3p + transactions 1.5p + rest 2.5p |
+| `docs/phase4_concurrency_demo.md` | Two-session terminal transcripts |
+
+---
+
+## Adım Adım İlerleme (checklist)
+
+- [ ] **Adım 1:** `docs/phase1_data_requirements.md` (MVP)
+- [ ] **Adım 2:** `docs/phase2_er_diagram.drawio` + `.png` + `_explanation.md`
+- [ ] **Adım 3:** `init/01_schema.sql`
+- [ ] **Adım 4:** `init/02_views.sql` + `init/03_triggers.sql` + `init/04_seed.sql`
+- [ ] **Adım 5:** `app/` scaffold + asyncmy pool + tenant_query helper + 2 pytest test
+- [ ] **Adım 6:** Auth + multi-tenant middleware
+- [ ] **Adım 7:** Vertical slice (tasks end-to-end, 5 entity, 2 sayfa)
+- [ ] **Adım 7b:** Diğer entity sayfaları
+- [ ] **Adım 8:** Analytics + transaction demo + concurrency demo
+- [ ] **Adım 9:** Report bölüm 1-6
+- [ ] **Adım 9b:** Report bölüm 7-11
+- [ ] **Adım 10:** Demo prova + slide + screencast backup
