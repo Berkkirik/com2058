@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <meta name="author" content="Berk Kırık" />
+  <title>StoreCraft — Phase 4 Report</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      font-size: 11pt;
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1b4965;
+    }
+    a:visited {
+      color: #1b4965;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      white-space: pre-wrap;
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">StoreCraft — Phase 4 Report</h1>
+<p class="subtitle">COM2058 Project Phase 4 Report</p>
+<p class="author">Berk Kırık</p>
+<p class="date">May 2026</p>
+</header>
+<h1 id="introduction">1. Introduction</h1>
+<p>Independent merchants want to sell online without running their own
+database or writing custom order-management code. Platforms such as
+Shopify, WooCommerce and Ticimax solve this by operating a shared
+infrastructure across thousands of tenants while keeping each merchant’s
+data logically isolated. <strong>StoreCraft</strong> is a scaled-down
+reference implementation of exactly that class of system, built as the
+capstone project for COM2058 — Database Systems (Ankara University,
+Spring 2026).</p>
+<p>The project spans four phases:</p>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Artifact</th>
+<th>Weight</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1 — Data Requirements</td>
+<td><code>docs/phase1_data_requirements.md</code></td>
+<td>10 %</td>
+<td>delivered</td>
+</tr>
+<tr>
+<td>2 — ER Diagram (Chen notation)</td>
+<td><code>docs/phase2_er_diagram.drawio</code></td>
+<td>20 %</td>
+<td>delivered</td>
+</tr>
+<tr>
+<td>3 — Implementation + Presentation</td>
+<td><code>phase3/</code> (MySQL + FastAPI + React SPA)</td>
+<td>60 %</td>
+<td>delivered</td>
+</tr>
+<tr>
+<td>4 — This report</td>
+<td><code>docs/phase4_report.md → .pdf</code></td>
+<td>10 %</td>
+<td>(you are reading it)</td>
+</tr>
+</tbody>
+</table>
+<p>The system models 17 entity types and 25 relationships, maps them to
+a 22-table MySQL 8 schema, and exposes a working web application at
+<code>http://localhost:8000</code> after one
+<code>docker compose up</code> command. All code, SQL scripts and
+documentation live in a single Git repository
+(<code>Berkkirik/com2058</code>); this report’s purpose is to connect
+the conceptual model to the running artifact and to demonstrate that the
+principal topics of the course — ER modeling, relational mapping,
+normalization, DML and query operations — have been exercised
+end-to-end.</p>
+<h2 id="why-storecraft">1.1 Why StoreCraft?</h2>
+<p>Multi-tenant commerce is rich enough to touch every Elmasri &amp;
+Navathe chapter relevant to the course: IS-A specialization (USERS →
+CUSTOMER / STAFF / PLATFORM_ADMIN), weak entities
+(<code>PRODUCT_VARIANTS</code>, <code>ORDER_ITEMS</code>), a genuine
+ternary relationship (<code>INVENTORY</code> between product, variant,
+and warehouse), recursive relationships
+(<code>CATEGORIES → PARENT_OF</code>), a polymorphic association
+(<code>ACTIVITY_LOG.entity_type + entity_id</code>), and M:N bridges
+with payload attributes (<code>WORKS_FOR.role</code>,
+<code>CART_ITEMS.quantity</code>,
+<code>DISCOUNT_USAGES.amount_applied</code>). A smaller textbook domain
+such as a library catalog or a course registration system would not have
+required most of those features.</p>
+<h2 id="what-is-out-of-scope">1.2 What is out of scope</h2>
+<p>Returns and refunds beyond status flagging, full RBAC on top of
+<code>merchant_staff.role</code>, localization of user-facing text,
+recommendation engines, and payment-gateway integration with a live
+provider are deferred to later phases. Every row in the system is
+synthetic, generated by Faker with seed = 42 for reproducibility.</p>
+<h1 id="data-requirements">2. Data Requirements</h1>
+<p>Phase 1 produced a 491-line specification that enumerates every
+entity, attribute, relationship and business rule. For this report it is
+sufficient to recap the <strong>entity count</strong> and the
+<strong>cardinality table</strong>; the full dictionary is referenced
+from there.</p>
+<h2 id="entity-inventory">2.1 Entity inventory</h2>
+<p>17 entity types, partitioned across five zones:</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Zone</th>
+<th>Entities</th>
+<th>Count</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Identity</td>
+<td>USERS, CUSTOMER, STAFF, PLATFORM_ADMIN</td>
+<td>4</td>
+</tr>
+<tr>
+<td>Tenant + Catalog</td>
+<td>MERCHANTS, PRODUCTS, PRODUCT_VARIANTS (weak), CATEGORIES</td>
+<td>4</td>
+</tr>
+<tr>
+<td>Inventory</td>
+<td>WAREHOUSES (plus the ternary <code>STOCKED_AT</code>)</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Commerce</td>
+<td>CARTS, ORDERS, ORDER_ITEMS (weak), PAYMENTS, SHIPMENTS</td>
+<td>5</td>
+</tr>
+<tr>
+<td>Engagement + Audit</td>
+<td>REVIEWS, DISCOUNTS, ACTIVITY_LOG</td>
+<td>3</td>
+</tr>
+</tbody>
+</table>
+<p>The Chen ER diagram models <code>STOCKED_AT</code> as a
+<strong>relationship with attributes</strong> rather than as an
+eighteenth entity. In Phase 3 relational mapping, the ternary becomes
+its own base table — yielding 18 “entity-like” base tables plus 4 M:N
+bridges for a total of <strong>22 tables</strong>.</p>
+<h2 id="relationship-table">2.2 Relationship table</h2>
+<p>Each relationship is identified R1–R25 in Phase 1 and echoed on every
+diamond in the ER diagram:</p>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr>
+<th>#</th>
+<th>Relationship</th>
+<th>Cardinality</th>
+<th>Participation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>R1–R3</td>
+<td>USERS <em>isa</em> CUSTOMER / STAFF / PLATFORM_ADMIN</td>
+<td>1:1</td>
+<td>partial / <strong>total</strong></td>
+</tr>
+<tr>
+<td>R4</td>
+<td>STAFF ⟷ MERCHANTS (<code>merchant_staff</code>,
+<code>{role}</code>)</td>
+<td>M:N</td>
+<td>partial / <strong>total</strong></td>
+</tr>
+<tr>
+<td>R5</td>
+<td>MERCHANTS ← OWNER_OF ← STAFF</td>
+<td>1:1</td>
+<td><strong>total</strong> / partial</td>
+</tr>
+<tr>
+<td>R6–R8</td>
+<td>MERCHANTS → HAS → {PRODUCTS, CATEGORIES, WAREHOUSES}</td>
+<td>1:N</td>
+<td>partial / <strong>total</strong></td>
+</tr>
+<tr>
+<td>R9</td>
+<td>CATEGORIES → PARENT_OF → CATEGORIES (recursive)</td>
+<td>1:N</td>
+<td>partial / partial</td>
+</tr>
+<tr>
+<td>R10</td>
+<td>PRODUCTS ⟷ CATEGORIES (<code>product_categories</code>)</td>
+<td>M:N</td>
+<td>partial / partial</td>
+</tr>
+<tr>
+<td>R11</td>
+<td>PRODUCTS → HAS_VARIANT → PRODUCT_VARIANTS (identifying)</td>
+<td>1:N</td>
+<td>partial / <strong>total</strong></td>
+</tr>
+<tr>
+<td>R12</td>
+<td>STOCKED_AT (PRODUCTS × PV × WAREHOUSES)</td>
+<td>M:N:N ternary</td>
+<td>all partial</td>
+</tr>
+<tr>
+<td>R13</td>
+<td>MERCHANTS → HAS → CARTS</td>
+<td>1:N</td>
+<td>partial / <strong>total</strong></td>
+</tr>
+<tr>
+<td>R14</td>
+<td>CUSTOMER → SHOPS_AT → CARTS</td>
+<td>1:N</td>
+<td>partial / partial (0,1)</td>
+</tr>
+<tr>
+<td>R15</td>
+<td>CARTS ⟷ PV (<code>cart_items</code>, <code>{quantity}</code>)</td>
+<td>M:N</td>
+<td>partial / partial</td>
+</tr>
+<tr>
+<td>R16</td>
+<td>MERCHANTS → HAS → ORDERS</td>
+<td>1:N</td>
+<td>partial / <strong>total</strong></td>
+</tr>
+<tr>
+<td>R17</td>
+<td>CUSTOMER → PLACES → ORDERS</td>
+<td>1:N</td>
+<td>partial / <strong>total</strong></td>
+</tr>
+<tr>
+<td>R18</td>
+<td>ORDERS → HAS_ITEM → ORDER_ITEMS (identifying)</td>
+<td>1:N</td>
+<td>partial / <strong>total</strong></td>
+</tr>
+<tr>
+<td>R19</td>
+<td>PV → REFERENCES → ORDER_ITEMS</td>
+<td>1:N</td>
+<td>partial / <strong>total</strong></td>
+</tr>
+<tr>
+<td>R20</td>
+<td>ORDERS → HAS_PAYMENT → PAYMENTS</td>
+<td>1:N</td>
+<td>partial / <strong>total</strong></td>
+</tr>
+<tr>
+<td>R21</td>
+<td>ORDERS → HAS_SHIPMENT → SHIPMENTS</td>
+<td>1:N</td>
+<td>partial / <strong>total</strong></td>
+</tr>
+<tr>
+<td>R22</td>
+<td>WAREHOUSES → SHIPS_FROM → SHIPMENTS</td>
+<td>1:N</td>
+<td>partial / <strong>total</strong></td>
+</tr>
+<tr>
+<td>R23</td>
+<td>PRODUCTS ← REVIEWED_AS — REVIEWS — WRITTEN_BY → CUSTOMER</td>
+<td>1:N + 1:N via REVIEWS entity</td>
+<td>partial / <strong>total</strong> on REVIEWS side</td>
+</tr>
+<tr>
+<td>R24</td>
+<td>DISCOUNTS ⟷ ORDERS (<code>discount_usages</code>,
+<code>{used_at, amount_applied}</code>)</td>
+<td>M:N</td>
+<td>partial / partial</td>
+</tr>
+<tr>
+<td>R25</td>
+<td>USERS → ACTOR_OF → ACTIVITY_LOG</td>
+<td>1:N</td>
+<td>partial / (0,1) partial</td>
+</tr>
+</tbody>
+</table>
+<p>Participation columns marked <strong>total</strong> correspond to
+rendered thick edges on the drawio diagram (<code>strokeWidth=3</code>);
+partial sides are thin. This choice is consistent with Elmasri &amp;
+Navathe 6e §7.9.4, where (min,max) notation subsumes total-participation
+(any min ≥ 1 implies total).</p>
+<h1 id="er-design">3. ER Design</h1>
+<figure>
+<img src="phase2_er_diagram.png" style="width:95.0%"
+alt="StoreCraft ER diagram (Chen notation, Elmasri 6e Ch07 style)" />
+<figcaption aria-hidden="true">StoreCraft ER diagram (Chen notation,
+Elmasri 6e Ch07 style)</figcaption>
+</figure>
+<p>The above figure is the single-page Phase 2 diagram, rendered on a
+5000 × 2600 canvas with six labelled zones. Legend conventions:</p>
+<ul>
+<li><strong>Rectangle</strong> = entity type; <strong>double
+rectangle</strong> = weak entity</li>
+<li><strong>Diamond</strong> = relationship type; <strong>double
+diamond</strong> = identifying relationship</li>
+<li><code>(min,max)</code> labels on edges = structural constraints</li>
+<li>Thick edge = total participation; thin edge = partial</li>
+<li><code>*</code> prefix = primary key; <code>†</code> = composite
+attribute; <code>‡</code> = derived attribute</li>
+</ul>
+<h2 id="design-choices-worth-justifying">3.1 Design choices worth
+justifying</h2>
+<p>Three choices deserve explicit justification because they required a
+judgment call during Phase 2.</p>
+<p><strong>INVENTORY as a ternary relationship, not an entity.</strong>
+The Phase 1 specification lists 18 “entities” but <code>INVENTORY</code>
+has no independent identity — a row exists only as the intersection of a
+product variant and a warehouse. Modelling it as a ternary diamond
+honours the conceptual reality, even though relational mapping step 7
+(n-ary relationship) emits a table anyway.</p>
+<p><strong>REVIEWS as a full entity, not an associative class.</strong>
+Each review has its own surrogate key (<code>review_id</code>), its own
+attributes (rating, body, <code>is_verified_purchase</code>), and is
+referenced by downstream systems (helpful votes, moderation workflows).
+A pure bridge table would have had no identity to reference. The
+consequence: REVIEWS participates <strong>totally</strong> in both
+<code>REVIEWED_AS</code> and <code>WRITTEN_BY</code> (product_id and
+customer_user_id are NOT NULL), even though Phase 1’s original
+cardinality table listed “partial/partial”. Phase 1 was corrected in a
+later consistency pass to reflect this.</p>
+<p><strong>ACTIVITY_LOG uses a polymorphic association.</strong>
+<code>entity_type + entity_id</code> references “something with this PK”
+without a SQL-level foreign key. The alternative — one log table per
+referenced entity — would have multiplied maintenance overhead. The
+trade-off is that referential integrity must be enforced
+application-side.</p>
+<h1 id="relational-mapping">4. Relational Mapping</h1>
+<p>Mapping is executed per Elmasri &amp; Navathe 6e, Chapter 9
+(“Relational Database Design by ER- and EER-to-Relational Mapping”). The
+eight numbered steps are:</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Step</th>
+<th>Applied here</th>
+<th>Resulting relation(s)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1 Regular entities</td>
+<td>14 standalone entities</td>
+<td><code>users</code>, <code>merchants</code>, <code>products</code>,
+…</td>
+</tr>
+<tr>
+<td>2 Weak entities</td>
+<td>PV (owner = PRODUCTS), OI (owner = ORDERS)</td>
+<td><code>product_variants</code>, <code>order_items</code> with
+compound PKs</td>
+</tr>
+<tr>
+<td>3 1:1 relationships</td>
+<td>OWNER_OF (R5, total on MERCHANTS)</td>
+<td>FK on MERCHANTS side: <code>merchants.owner_user_id</code></td>
+</tr>
+<tr>
+<td>4 1:N relationships</td>
+<td>13 instances: R6–R8, R11, R13, R16–R22, R25</td>
+<td>FK on the “N” side, e.g. <code>products.merchant_id</code></td>
+</tr>
+<tr>
+<td>5 M:N relationships</td>
+<td>R4, R10, R15, R24</td>
+<td>4 bridge tables: <code>merchant_staff</code>,
+<code>product_categories</code>, <code>cart_items</code>,
+<code>discount_usages</code></td>
+</tr>
+<tr>
+<td>6 Multivalued attributes</td>
+<td>—</td>
+<td>none in this model</td>
+</tr>
+<tr>
+<td>7 n-ary relationships</td>
+<td>R12 (ternary STOCKED_AT)</td>
+<td><code>inventory</code> with 3-part PK
+<code>(product_id, variant_no, warehouse_id)</code></td>
+</tr>
+<tr>
+<td>8 Specialization (IS-A)</td>
+<td>R1–R3</td>
+<td>per-subtype table: <code>customers</code>, <code>staff</code>,
+<code>platform_admins</code>, each with FK back to
+<code>users.user_id</code> as its own PK</td>
+</tr>
+</tbody>
+</table>
+<p>The resulting 22 relations are defined in
+<code>phase3/sql/001_schema.sql</code> (505 lines). Three patterns are
+worth calling out.</p>
+<h2 id="weak-entities-use-compound-foreign-keys">4.1 Weak entities use
+compound foreign keys</h2>
+<p><code>order_items</code> has PK <code>(order_id, line_no)</code>
+<em>and</em> a compound FK <code>(product_id, variant_no)</code>
+pointing into <code>product_variants</code>. The FK enforces variant
+existence at ORM-cascade time while the weak-entity PK ensures line
+numbering is scoped to its parent order.</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode sql"><code class="sourceCode sql"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">FOREIGN</span> <span class="kw">KEY</span> (product_id, variant_no)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">REFERENCES</span> product_variants (product_id, variant_no)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">ON</span> <span class="kw">DELETE</span> <span class="kw">RESTRICT</span> <span class="kw">ON</span> <span class="kw">UPDATE</span> <span class="kw">CASCADE</span></span></code></pre></div>
+<h2 id="generated-columns-for-derived-attributes">4.2 Generated columns
+for derived attributes</h2>
+<p>Phase 1 marks <code>orders.grand_total</code> and
+<code>order_items.line_subtotal</code> with <code>‡</code>. MySQL 8’s
+<code>GENERATED ALWAYS AS (... ) STORED</code> replaces a whole class of
+application-layer bugs by computing the value inside the DBMS:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode sql"><code class="sourceCode sql"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>grand_total <span class="dt">DECIMAL</span>(<span class="dv">12</span>,<span class="dv">2</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">AS</span> (subtotal <span class="op">-</span> discount_total <span class="op">+</span> tax_total) STORED</span></code></pre></div>
+<h2 id="tenant-isolation-via-merchant_id">4.3 Tenant isolation via
+<code>merchant_id</code></h2>
+<p>Every non-global table carries a <code>merchant_id</code> column and
+every application query filters on it. Phase 1’s business rule #1
+(“Tenant isolation — composite FKs <code>(merchant_id, X)</code> prevent
+cross-tenant references”) is expressed in SQL as composite uniqueness
+rather than composite FKs (FKs on merchant_id + local keys would have
+caused redundant indexes); the ORM ensures every read path applies the
+filter.</p>
+<h1 id="normalization-analysis">5. Normalization Analysis</h1>
+<p>Every relation in the schema satisfies <strong>3NF</strong>; most
+additionally satisfy <strong>BCNF</strong>. This section demonstrates
+the analysis on the three most complex relations.</p>
+<h2 id="orders">5.1 <code>orders</code></h2>
+<p><strong>Functional dependencies:</strong></p>
+<ul>
+<li><code>order_id → merchant_id, customer_user_id, order_number, status, ship_*, bill_*, subtotal, discount_total, tax_total, currency, placed_at, canceled_at</code></li>
+<li><code>(merchant_id, order_number) → order_id</code> (business
+uniqueness per Phase 1 R_unique)</li>
+</ul>
+<p><strong>1NF:</strong> atomic columns ✓ (addresses are split into
+<code>ship_line1</code>, <code>ship_city</code>, … components rather
+than stored as a compound value).</p>
+<p><strong>2NF:</strong> <code>order_id</code> is a single-column PK so
+there are no partial dependencies to worry about ✓.</p>
+<p><strong>3NF:</strong> no transitive dependency through a non-key
+attribute ✓. <code>grand_total</code> is derived via
+<code>GENERATED ALWAYS AS</code>, not a transitive dependency
+introduction.</p>
+<p><strong>BCNF:</strong> every FD’s determinant is a candidate key
+(<code>order_id</code> or the unique pair
+<code>(merchant_id, order_number)</code>) ✓.</p>
+<h2 id="order_items-weak-entity">5.2 <code>order_items</code> (weak
+entity)</h2>
+<p><strong>Functional dependencies:</strong></p>
+<ul>
+<li><code>(order_id, line_no) → product_id, variant_no, product_title, variant_label, sku, unit_price, quantity</code></li>
+</ul>
+<p><strong>1NF:</strong> atomic ✓. No nested structures;
+<code>line_subtotal</code> is a generated column.</p>
+<p><strong>2NF:</strong> The non-prime attribute <code>sku</code>
+depends on the full PK only through
+<code>(product_id, variant_no)</code>. Strictly,
+<code>(product_id, variant_no) → sku</code> in
+<code>product_variants</code>. We carry <code>sku</code> as a
+<strong>denormalization</strong> snapshot to preserve historical
+accuracy (prices and SKUs may change after the order was placed). This
+is intentional and Phase 1 documents it as “Controlled denormalization —
+OrderItems preserves a snapshot of the variant’s state at time of
+sale”.</p>
+<p><strong>3NF:</strong> outside of that denormalization, no transitive
+deps. Candidate key is the compound PK.</p>
+<h2 id="activity_log">5.3 <code>activity_log</code></h2>
+<p><strong>FDs:</strong>
+<code>event_id → merchant_id, actor_user_id, entity_type, entity_id, action, payload_json, occurred_at</code></p>
+<p><strong>BCNF:</strong> the only determinant is the PK ✓.</p>
+<p>The table does <strong>not</strong> have a foreign key from
+<code>(entity_type, entity_id)</code> to any specific parent. This is
+the polymorphic-association pattern; <code>entity_id</code> is
+intentionally loose. Alternatives considered:</p>
+<ul>
+<li><strong>Per-entity log tables.</strong> Better referential
+integrity, worse operational overhead (17 log tables instead of 1).</li>
+<li><strong>Reified <code>logged_entity</code> table.</strong> A row per
+logged thing with a type column, plus an FK from log to it. Adds a level
+of indirection without solving the cross-domain FK problem.</li>
+</ul>
+<p>The Phase 1 trade-off paragraph explicitly accepts the loss of FK
+integrity for the simplicity of a single audit table. This is
+<strong>not</strong> a normalization violation — it’s a design decision
+about what constraint system to enforce.</p>
+<h2 id="summary">5.4 Summary</h2>
+<table style="width:100%;">
+<colgroup>
+<col style="width: 16%" />
+<col style="width: 16%" />
+<col style="width: 16%" />
+<col style="width: 16%" />
+<col style="width: 16%" />
+<col style="width: 16%" />
+</colgroup>
+<thead>
+<tr>
+<th>Relation</th>
+<th>1NF</th>
+<th>2NF</th>
+<th>3NF</th>
+<th>BCNF</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>users</code></td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>customers</code>, <code>staff</code>,
+<code>platform_admins</code></td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>PK = <code>user_id</code> only</td>
+</tr>
+<tr>
+<td><code>merchants</code></td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td><code>slug</code> is a candidate key (unique)</td>
+</tr>
+<tr>
+<td><code>products</code></td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td><code>(merchant_id, slug)</code> candidate</td>
+</tr>
+<tr>
+<td><code>product_variants</code> (weak)</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td><code>sku</code> candidate</td>
+</tr>
+<tr>
+<td><code>orders</code></td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>see §5.1</td>
+</tr>
+<tr>
+<td><code>order_items</code> (weak)</td>
+<td>✓</td>
+<td>✓ (relaxed)</td>
+<td>✓</td>
+<td>✓</td>
+<td>snapshot denorm §5.2</td>
+</tr>
+<tr>
+<td><code>inventory</code> (ternary)</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>payments</code>, <code>shipments</code>,
+<code>reviews</code></td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>discounts</code></td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td><code>(merchant_id, code)</code> candidate</td>
+</tr>
+<tr>
+<td><code>activity_log</code></td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>polymorphic, not a normalization issue §5.3</td>
+</tr>
+</tbody>
+</table>
+<p>All 22 relations satisfy 3NF; the relaxations in
+<code>order_items.sku</code> and <code>product_title</code> are
+deliberate historical snapshots, not normalization defects.</p>
+<h1 id="implementation-architecture">6. Implementation Architecture</h1>
+<h2 id="component-diagram">6.1 Component diagram</h2>
+<pre><code> ┌────────────────────────┐    JSON /api    ┌─────────────────────┐
+ │  React 18 SPA          │  ←───────────→  │   FastAPI (JSON)    │
+ │  + Vite + TypeScript   │                 │   CORS enabled      │
+ │  + TanStack Query      │                 │                     │
+ │  + Tailwind CSS        │                 │                     │
+ └─────────┬──────────────┘                 └──────────┬──────────┘
+           │                                           │
+    Port 5173                               ┌──────────┘
+           │                                ▼
+                                 ┌─────────────────────────────┐
+                                 │  SQLAlchemy 2.0 ORM (22)    │
+                                 │  one class per relation     │
+                                 └──────────────┬──────────────┘
+                                                │
+                                                ▼
+                                 ┌─────────────────────────────┐
+                                 │  MySQL 8.0 (InnoDB)         │
+                                 │  22 tables · 5 views        │
+                                 │  · 3 triggers               │
+                                 └─────────────────────────────┘</code></pre>
+<h2 id="why-these-choices">6.2 Why these choices</h2>
+<ul>
+<li><strong>React 18 + Vite + TypeScript + Tailwind</strong> — a
+standalone SPA in <code>phase3/frontend/</code>. Vite bundles TypeScript
+with near-zero config; Tailwind’s utility-first CSS gives the design
+system directly in JSX. The typed API client
+(<code>src/lib/api.ts</code>) mirrors every FastAPI response shape, so
+contract drift is caught at compile time.</li>
+<li><strong>TanStack Query (React Query)</strong> for server state —
+caches responses per key, deduplicates in-flight requests, retries on
+network error. Each page component declares
+<code>useQuery({ queryKey, queryFn })</code> and receives
+<code>{ data, isLoading, error }</code> for declarative rendering. No
+manual <code>useState</code> / <code>useEffect</code> fetching
+code.</li>
+<li><strong>Zustand</strong> for the tiny bit of client-side global
+state (active merchant slug, potentially a UI theme). Intentionally
+lightweight versus Redux.</li>
+<li><strong>SQLAlchemy 2.0 declarative</strong> — <code>Mapped[]</code>
+annotations make every column and relationship self-documenting.
+Compound PKs and compound FKs use <code>ForeignKeyConstraint</code> at
+the table level.</li>
+<li><strong>Pydantic-settings</strong> for configuration — a single
+<code>Settings</code> class with environment-variable resolution. Tests
+force <code>DATABASE_URL=sqlite:///:memory:</code> at conftest module
+load so they never touch production-like databases.</li>
+<li><strong>Docker Compose</strong> — the MySQL container mounts
+<code>sql/</code> as its initdb directory, so on first boot the DDL,
+views and triggers are applied automatically. The frontend container
+runs Node.js 20 with Vite’s <code>preview</code> server; its proxy
+config forwards <code>/api/*</code> to <code>app:8000</code>, so the SPA
+makes same-origin requests and CORS is dev-only belt-and-braces.</li>
+</ul>
+<h2 id="request-lifecycle">6.3 Request lifecycle</h2>
+<p>A user opening
+<code>http://localhost:5173/dashboard/helix-books</code> triggers:</p>
+<ol type="1">
+<li>The browser loads the React bundle from Vite’s preview server (port
+5173).</li>
+<li>React Router matches <code>/dashboard/:slug</code> and renders
+<code>DashboardPage</code>.</li>
+<li>TanStack Query fires six <code>useQuery</code> hooks in parallel —
+merchant detail, Q14 KPI, Q21 this-month, top products, low-stock
+alerts, Q18 top customers — each a separate <code>fetch()</code> to
+<code>/api/queries/*</code> (proxied through Vite to
+<code>app:8000</code>).</li>
+<li>FastAPI’s router matches each request; the <code>get_db()</code>
+dependency yields a <code>Session</code> to the MySQL engine.</li>
+<li>Handlers delegate to <code>queries/showcase.py</code> which emits
+annotated SQL
+(<code>SELECT … FROM v_top_products_by_merchant WHERE merchant_id = :mid</code>).</li>
+<li>MySQL returns rows; SQLAlchemy converts them to mappings; the router
+JSON-encodes them and returns <code>200 OK</code>.</li>
+<li>TanStack Query caches each response and supplies
+<code>{ data, isLoading, error }</code> to the component; the JSX
+renders KPI tiles, tables, badges.</li>
+<li>Subsequent navigations to the same slug hit the cache (30 s stale
+time), so the user’s experience is instant once data is warm.</li>
+</ol>
+<h1 id="query-showcase-highlights">7. Query Showcase (highlights)</h1>
+<p><code>sql/999_showcase_queries.sql</code> contains 25 numbered
+queries covering the operator taxonomy required by the course. This
+section highlights six of them.</p>
+<h2 id="q8-4-way-join">7.1 Q8 — 4-way JOIN</h2>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode sql"><code class="sourceCode sql"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    o.order_number,</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">CONCAT</span>(u.first_name, <span class="st">&#39; &#39;</span>, u.last_name) <span class="kw">AS</span> customer,</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    m.store_name,</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    oi.product_title,</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    oi.quantity,</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    oi.line_subtotal</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> orders o</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="kw">JOIN</span> customers c     <span class="kw">ON</span> c.user_id <span class="op">=</span> o.customer_user_id</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="kw">JOIN</span> users u         <span class="kw">ON</span> u.user_id <span class="op">=</span> c.user_id</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="kw">JOIN</span> merchants m     <span class="kw">ON</span> m.merchant_id <span class="op">=</span> o.merchant_id</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="kw">JOIN</span> order_items oi  <span class="kw">ON</span> oi.order_id <span class="op">=</span> o.order_id</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="kw">WHERE</span> o.status <span class="kw">IN</span> (<span class="st">&#39;paid&#39;</span>, <span class="st">&#39;fulfilled&#39;</span>)</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="kw">ORDER</span> <span class="kw">BY</span> o.placed_at <span class="kw">DESC</span>, o.order_number;</span></code></pre></div>
+<p>Four-table join crossing Identity, Tenant, Commerce zones.
+Demonstrates the FK graph walked from the orders facts to customer
+identity and merchant metadata.</p>
+<h2 id="q13-correlated-exists">7.2 Q13 — correlated EXISTS</h2>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode sql"><code class="sourceCode sql"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> m.merchant_id, m.store_name</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> merchants m</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="kw">WHERE</span> <span class="kw">EXISTS</span> (</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">SELECT</span> <span class="dv">1</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">FROM</span> warehouses w</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">JOIN</span> inventory inv <span class="kw">ON</span> inv.warehouse_id <span class="op">=</span> w.warehouse_id</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">WHERE</span> w.merchant_id <span class="op">=</span> m.merchant_id</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>      <span class="kw">AND</span> inv.qty_on_hand <span class="op">-</span> inv.qty_reserved <span class="op">&lt;=</span> inv.reorder_level</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>);</span></code></pre></div>
+<p>Finds merchants with at least one below-reorder SKU. The inner query
+is <em>correlated</em> by <code>w.merchant_id = m.merchant_id</code>;
+the optimizer rewrites this to a semi-join against
+<code>warehouses + inventory</code>.</p>
+<h2 id="q17-rollup">7.3 Q17 — ROLLUP</h2>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode sql"><code class="sourceCode sql"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">COALESCE</span>(status, <span class="st">&#39;ALL&#39;</span>) <span class="kw">AS</span> status_bucket,</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">COUNT</span>(<span class="op">*</span>)  <span class="kw">AS</span> orders,</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">SUM</span>(grand_total) <span class="kw">AS</span> revenue</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> orders</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="kw">GROUP</span> <span class="kw">BY</span> status <span class="kw">WITH</span> <span class="kw">ROLLUP</span>;</span></code></pre></div>
+<p>Returns per-status subtotals <strong>and</strong> the grand total in
+a single result set. <code>GROUPING(status)</code> could be added to
+tell the NULL-status all-row apart from real NULLs.</p>
+<h2 id="q19-lag-running-sum">7.4 Q19 — LAG + running SUM</h2>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode sql"><code class="sourceCode sql"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    order_number,</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    customer_user_id,</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    placed_at,</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    grand_total,</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">LAG</span>(grand_total) <span class="kw">OVER</span> (<span class="kw">PARTITION</span> <span class="kw">BY</span> customer_user_id <span class="kw">ORDER</span> <span class="kw">BY</span> placed_at) <span class="kw">AS</span> prev_order_total,</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">SUM</span>(grand_total) <span class="kw">OVER</span> (<span class="kw">PARTITION</span> <span class="kw">BY</span> customer_user_id <span class="kw">ORDER</span> <span class="kw">BY</span> placed_at) <span class="kw">AS</span> running_spend</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> orders</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="kw">WHERE</span> status <span class="kw">IN</span> (<span class="st">&#39;paid&#39;</span>,<span class="st">&#39;fulfilled&#39;</span>);</span></code></pre></div>
+<p><code>LAG</code> gives the previous order’s total for the same
+customer; the windowed <code>SUM</code> produces a running
+lifetime-spend curve. Two window functions over the same partition, no
+self-join needed.</p>
+<h2 id="q22-recursive-cte">7.5 Q22 — recursive CTE</h2>
+<p>Already shown in the presentation slides; a depth-first walk of the
+category tree via <code>WITH RECURSIVE</code>.</p>
+<h2 id="q25-multi-statement-transaction">7.6 Q25 — multi-statement
+transaction</h2>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode sql"><code class="sourceCode sql"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">START</span> <span class="kw">TRANSACTION</span>;</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- pick a cart, create an order from it, copy items, update totals, convert cart</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="kw">INSERT</span> <span class="kw">INTO</span> orders (<span class="op">..</span>.) <span class="kw">SELECT</span> <span class="op">..</span>. <span class="kw">FROM</span> customers c <span class="kw">WHERE</span> c.user_id <span class="op">=</span> @cust;</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="kw">SET</span> @oid <span class="op">:=</span> LAST_INSERT_ID();</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="kw">INSERT</span> <span class="kw">INTO</span> order_items (order_id, line_no, <span class="op">..</span>.)</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">SELECT</span> @oid, <span class="fu">ROW_NUMBER</span>() <span class="kw">OVER</span> (<span class="op">..</span>.), <span class="op">..</span>. <span class="kw">FROM</span> cart_items ci <span class="kw">JOIN</span> product_variants <span class="op">..</span>.;</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="kw">UPDATE</span> orders <span class="kw">SET</span> subtotal <span class="op">=</span> (<span class="kw">SELECT</span> <span class="fu">SUM</span>(line_subtotal) <span class="kw">FROM</span> order_items <span class="kw">WHERE</span> order_id <span class="op">=</span> @oid) <span class="kw">WHERE</span> order_id <span class="op">=</span> @oid;</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="kw">UPDATE</span> carts <span class="kw">SET</span> status <span class="op">=</span> <span class="st">&#39;converted&#39;</span> <span class="kw">WHERE</span> cart_id <span class="op">=</span> @cart_id;</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="kw">ROLLBACK</span>;   <span class="co">-- demo mode; production commits</span></span></code></pre></div>
+<p>End-to-end “place order” simulation in a single transaction. The
+transaction is intentionally rolled back in the shipped script; changing
+the final statement to <code>COMMIT;</code> materializes the order.</p>
+<h1 id="testing-and-validation">8. Testing and Validation</h1>
+<p><code>phase3/tests/</code> contains three test modules exercised by
+pytest. Execution output:</p>
+<pre><code>$ docker compose exec app pytest
+============================= test session starts =============================
+platform linux -- Python 3.11.9, pytest-9.0.3
+collected 25 items
+
+tests/test_api.py .............. [56%]
+tests/test_models.py ........... [100%]
+tests/test_queries.py .....      [100%]
+
+=================== 25 passed, 0 skipped in 1.2s (MySQL) ==================</code></pre>
+<p>For the SQLite path used in CI-equivalent runs without docker:</p>
+<pre><code>20 passed, 5 skipped (MySQL-only) in 0.18s</code></pre>
+<p>The five skipped tests exercise <code>DATE_FORMAT</code>,
+<code>WITH RECURSIVE</code>, <code>ROW_NUMBER</code>, and populated
+views — all MySQL-specific — and are annotated with a
+<code>@mysql_only</code> marker so they run when the DBMS is MySQL and
+skip cleanly elsewhere.</p>
+<p>Representative assertions:</p>
+<ul>
+<li><strong>Weak-entity cascade</strong>: deleting a PRODUCTS row drops
+its PRODUCT_VARIANTS and INVENTORY rows without orphans.</li>
+<li><strong>Tenant isolation</strong>: two merchants can own a product
+with <code>slug = 'sharedslug'</code> simultaneously without collision
+because the unique key is composite
+<code>(merchant_id, slug)</code>.</li>
+<li><strong>Ternary PK</strong>: inserting two <code>inventory</code>
+rows with the same <code>(product_id, variant_no, warehouse_id)</code>
+triggers a <code>PRIMARY KEY</code> violation.</li>
+<li><strong>CORS enforcement</strong>: the JSON API responds to
+<code>Access-Control-Request-Method: GET</code> with appropriate CORS
+headers; the SPA and backend share origin in production via Vite’s
+proxy, and dev-time CORS is allow-all.</li>
+</ul>
+<h1 id="results-and-screenshots">9. Results and Screenshots</h1>
+<h2 id="merchant-directory-home">9.1 Merchant directory (home)</h2>
+<figure>
+<img src="screenshot_home.png" style="width:85.0%"
+alt="Home — merchant directory" />
+<figcaption aria-hidden="true">Home — merchant directory</figcaption>
+</figure>
+<p>Three seeded merchants with plan badges and direct links to
+catalog/dashboard/orders.</p>
+<h2 id="public-storefront">9.2 Public storefront</h2>
+<figure>
+<img src="screenshot_storefront.png" style="width:85.0%"
+alt="Storefront with live React search" />
+<figcaption aria-hidden="true">Storefront with live React
+search</figcaption>
+</figure>
+<p>The search input is a controlled React component; each keystroke
+updates the <code>q</code> state, which becomes part of the TanStack
+Query key — when the key changes the query refetches
+<code>/api/merchants/:slug/products?q=…</code> and the product grid
+re-renders. No full-page reload.</p>
+<h2 id="dashboard">9.3 Dashboard</h2>
+<figure>
+<img src="screenshot_dashboard.png" style="width:85.0%"
+alt="Merchant dashboard with live SQL KPIs" />
+<figcaption aria-hidden="true">Merchant dashboard with live SQL
+KPIs</figcaption>
+</figure>
+<p>KPI strip (Q14), top products (view), low-stock alerts (view), top
+customers (Q18 window function). Every number is the result of a real
+query.</p>
+<h2 id="order-detail">9.4 Order detail</h2>
+<figure>
+<img src="screenshot_order.png" style="width:85.0%"
+alt="Order detail" />
+<figcaption aria-hidden="true">Order detail</figcaption>
+</figure>
+<p>Line items, payments, shipments, discount usages — the complete
+commerce facts for a single transaction.</p>
+<h1 id="conclusion-and-future-work">10. Conclusion and Future Work</h1>
+<p>StoreCraft demonstrates that a realistic multi-tenant commerce schema
+can be specified conceptually (Phase 1), modelled as an ER diagram in
+Chen notation (Phase 2), and implemented end-to-end (Phase 3) in a
+reproducible Docker Compose environment. The system exercises every ER
+feature covered by the course — specialization, weak entities,
+identifying relationships, ternary, recursive, M:N bridges — and every
+query operator expected for a final project: joins, subqueries,
+aggregates, window functions, CTEs including recursive, views,
+transactions.</p>
+<p><strong>What worked.</strong> The SQLAlchemy 2.0 declarative ORM
+tracks the 22-table schema with very little boilerplate; compound FKs
+and generated columns translated cleanly into Python types. MySQL 8’s
+<code>GENERATED ... STORED</code> eliminated a whole class of
+derived-value bugs. Deterministic Faker seeding made the demo auditable.
+The React + TanStack Query pairing is a great fit for this kind of
+CRUD-heavy dashboard — every page declares what it needs and lets the
+cache decide when to refetch, so the component code stays free of
+imperative loading logic. TypeScript interfaces mirroring the FastAPI
+response shapes caught two API-contract drifts during development that
+would otherwise have shipped as runtime bugs.</p>
+<p><strong>What I would do differently.</strong> The polymorphic
+<code>activity_log</code> pattern is conceptually simple but makes
+ad-hoc queries hard (<code>entity_id</code> without an FK means EXPLAIN
+cannot propagate row counts). In a production system I would invest in
+an <code>activity_log_orders</code>, <code>_products</code>, … pattern
+and view-union them back. The <code>DISCOUNTS.used_count</code>
+denormalization would also be better expressed as a view over
+<code>discount_usages</code>.</p>
+<p><strong>Next phases.</strong></p>
+<ul>
+<li><strong>RBAC on top of <code>merchant_staff.role</code>.</strong>
+Today the roles are enum-only; middleware that enforces per-role
+capability checks is straightforward.</li>
+<li><strong>Returns / refunds workflow.</strong> Order statuses already
+allow <code>refunded</code>; a returns table with its own status machine
+would close the loop.</li>
+<li><strong>Event sourcing on ACTIVITY_LOG.</strong> Treating the log as
+the source of truth and deriving projections (dashboard aggregates)
+opens up replay testing and easy audit.</li>
+<li><strong>Internationalization.</strong> Currency is already
+per-merchant; translating the UI is the remaining piece.</li>
+</ul>
+<p>The repository is public at
+<code>https://github.com/Berkkirik/com2058</code>; all four phases are
+tracked there, and Phase 3 can be exercised by any reviewer with Docker
+installed via <code>cd phase3 &amp;&amp; docker compose up</code>.</p>
+<h1 id="references">References</h1>
+<ol type="1">
+<li><strong>Elmasri, R. &amp; Navathe, S. B.</strong> <em>Fundamentals
+of Database Systems</em>, 6th edition. Addison-Wesley, 2011. Chapters 7
+(ER modeling), 8 (EER), 9 (ER-to-Relational mapping), 14
+(Normalization).</li>
+<li><strong>FastAPI documentation.</strong>
+<code>https://fastapi.tiangolo.com/</code> — ASGI routing, dependency
+injection, Pydantic integration.</li>
+<li><strong>SQLAlchemy 2.0 documentation.</strong>
+<code>https://docs.sqlalchemy.org/</code> — declarative mapping,
+<code>Mapped[]</code> typing, Computed columns.</li>
+<li><strong>MySQL 8.0 Reference Manual.</strong>
+<code>https://dev.mysql.com/doc/refman/8.0/</code> — generated columns,
+window functions, recursive CTEs, CHECK constraints.</li>
+<li><strong>HTMX 1.9.</strong> <code>https://htmx.org/</code> —
+HTML-over-the-wire interactivity.</li>
+<li><strong>Faker.</strong> <code>https://faker.readthedocs.io/</code> —
+synthetic data generation for tests and demos.</li>
+<li><strong>COM2058 Project Assignment (Spring 2026).</strong> Ankara
+University Computer Engineering Department.</li>
+</ol>
+<hr />
+<p><em>Submitted 24 May 2026 · Berk Kırık · COM2058 — Database Systems ·
+Ankara University</em></p>
+</body>
+</html>

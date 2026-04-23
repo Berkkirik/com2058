@@ -1,4 +1,39 @@
+# Environment
 .env
-mysql_data/
+.env.local
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+.eggs/
+dist/
+build/
+
+# Testing
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.hypothesis/
+
+# Linting
+.ruff_cache/
+.mypy_cache/
+
+# Editor / OS
 .DS_Store
 .idea/
+.vscode/
+*.swp
+
+# MySQL data
+mysql_data/
+
+# Ralph loop state (session-local)
+.claude/ralph-loop.local.md
+.claude/agents/
