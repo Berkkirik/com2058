@@ -65,19 +65,19 @@ log = logging.getLogger("storecraft.seed")
 
 MERCHANT_PRESETS = [
     {
-        "slug": "berkin-kitapcisi",
-        "store_name": "Berk'in Kitapçısı",
-        "currency": "TRY",
+        "slug": "helix-books",
+        "store_name": "Helix Books",
+        "currency": "USD",
         "plan": "pro",
-        "categories": ["Edebiyat", "Bilim", "Tarih", "Çocuk Kitapları", "Programlama"],
+        "categories": ["Literature", "Science", "History", "Children's Books", "Programming"],
         "product_seed": "book",
     },
     {
-        "slug": "ankara-elektronik",
-        "store_name": "Ankara Elektronik",
-        "currency": "TRY",
+        "slug": "voltaic-electronics",
+        "store_name": "Voltaic Electronics",
+        "currency": "EUR",
         "plan": "enterprise",
-        "categories": ["Telefon", "Bilgisayar", "Ses Sistemleri", "Akıllı Ev", "Kablolar"],
+        "categories": ["Phones", "Laptops", "Audio", "Smart Home", "Cables"],
         "product_seed": "electronics",
     },
     {
@@ -92,16 +92,16 @@ MERCHANT_PRESETS = [
 
 
 BOOK_TITLES = [
-    "Sessiz Bahçe", "Ankara'nın Sokakları", "Veri Tabanı Sanatı", "Python ile Yolculuk",
-    "Algoritmaların Dansı", "Kayıp Zaman", "Sayısal Devrim", "Makine Düşünür mü?",
-    "Bir Şehir Hikayesi", "Anılarımın İçinde", "Sıcak Kahve", "Uyuyan Güneş",
-    "Yağmur Altında", "Gölgelerin Dili", "Matematiksel Güzellik", "Orman Fısıltıları",
+    "The Silent Garden", "City of Algorithms", "The Art of Databases", "A Journey with Python",
+    "Dance of the Algorithms", "Lost Time", "The Digital Revolution", "Can Machines Think?",
+    "A Tale of One City", "Within My Memories", "Hot Coffee", "The Sleeping Sun",
+    "Under the Rain", "Language of Shadows", "Mathematical Beauty", "Whispers of the Forest",
 ]
 ELECTRONICS_TITLES = [
-    "Akıllı Telefon X7", "Dizüstü Bilgisayar UltraBook", "Kablosuz Kulaklık Pro", "4K Monitör 27\"",
-    "Mekanik Klavye", "Oyuncu Faresi", "USB-C Hub", "SSD 1TB NVMe", "Router Wi-Fi 6",
-    "Akıllı Ampul RGB", "Bluetooth Hoparlör", "Webcam FHD", "Taşınabilir Şarj 20000mAh",
-    "Termal Kamera", "VR Başlık", "3D Yazıcı Filament",
+    "Smartphone X7", "UltraBook Laptop 14\"", "Wireless Headphones Pro", "4K Monitor 27\"",
+    "Mechanical Keyboard", "Gaming Mouse", "USB-C Hub", "SSD 1TB NVMe", "Wi-Fi 6 Router",
+    "RGB Smart Bulb", "Bluetooth Speaker", "Webcam FHD", "Power Bank 20000mAh",
+    "Thermal Camera", "VR Headset", "3D Printer Filament",
 ]
 GADGET_TITLES = [
     "Smart Watch Titan", "Action Camera 4K", "Drone Explorer", "VR Headset Alpha",
@@ -196,7 +196,7 @@ def run(*, seed: int = 42, reset: bool = True, session: Session | None = None) -
                 owner_user_id=owner_user.user_id,
                 business_line1=fake.street_address(),
                 business_city=fake.city(),
-                business_country="TR" if preset["slug"] != "techstore" else "US",
+                business_country={"helix-books": "US", "voltaic-electronics": "DE", "techstore": "US"}[preset["slug"]],
                 business_zip=fake.postcode()[:20],
                 contact_email=f"hello@{preset['slug']}.local",
                 currency=preset["currency"],
@@ -252,7 +252,7 @@ def run(*, seed: int = 42, reset: bool = True, session: Session | None = None) -
                 top_cats.append(c)
             session.flush()
             for j in range(2):
-                child_name = fake.word().title() + " " + random.choice(["Serisi", "Koleksiyonu", "Özel"])
+                child_name = fake.word().title() + " " + random.choice(["Series", "Collection", "Specials"])
                 session.add(
                     Category(
                         merchant_id=m.merchant_id,
@@ -269,10 +269,10 @@ def run(*, seed: int = 42, reset: bool = True, session: Session | None = None) -
                 session.add(
                     Warehouse(
                         merchant_id=m.merchant_id,
-                        name=f"{preset['store_name']} · {fake.city()} Deposu",
+                        name=f"{preset['store_name']} · {fake.city()} Warehouse",
                         addr_line1=fake.street_address(),
                         addr_city=fake.city(),
-                        addr_country=m.business_country or "TR",
+                        addr_country=m.business_country or "US",
                         addr_zip=fake.postcode()[:20],
                     )
                 )
@@ -302,9 +302,9 @@ def run(*, seed: int = 42, reset: bool = True, session: Session | None = None) -
                 variant_count = random.randint(1, 3)
                 for vn in range(1, variant_count + 1):
                     options = [
-                        ("Renk", random.choice(["Siyah", "Beyaz", "Mavi", "Kırmızı", "Yeşil"])),
-                        ("Boyut", random.choice(["S", "M", "L", "XL"])),
-                        ("Kapak", random.choice(["Karton", "Ciltli", "PDF"])),
+                        ("Color", random.choice(["Black", "White", "Blue", "Red", "Green"])),
+                        ("Size",  random.choice(["S", "M", "L", "XL"])),
+                        ("Cover", random.choice(["Paperback", "Hardcover", "PDF"])),
                     ]
                     opt_name, opt_val = options[random.randint(0, 2)]
                     session.add(
@@ -363,7 +363,8 @@ def run(*, seed: int = 42, reset: bool = True, session: Session | None = None) -
                 session.add(
                     Discount(
                         merchant_id=m.merchant_id,
-                        code=f"{preset['product_seed'].upper()}{i + 1:02d}",
+                        code=f"{preset['product_seed'].upper()}{i + 1:02d}",  # e.g. BOOK01, ELECTRONICS03
+
                         discount_type=disc_type,
                         value=value,
                         min_order_amount=Decimal(str(random.choice([0, 100, 250, 500]))),
@@ -395,7 +396,7 @@ def run(*, seed: int = 42, reset: bool = True, session: Session | None = None) -
                     user_id=u.user_id,
                     default_shipping_line1=fake.street_address(),
                     default_shipping_city=fake.city(),
-                    default_shipping_country="TR",
+                    default_shipping_country="US",
                     default_shipping_zip=fake.postcode()[:20],
                     date_of_birth=fake.date_of_birth(minimum_age=18, maximum_age=75),
                     loyalty_points=random.randint(0, 500),
@@ -462,11 +463,11 @@ def run(*, seed: int = 42, reset: bool = True, session: Session | None = None) -
                     status=status,
                     ship_line1=fake.street_address(),
                     ship_city=fake.city(),
-                    ship_country=m.business_country or "TR",
+                    ship_country=m.business_country or "US",
                     ship_zip=fake.postcode()[:20],
                     bill_line1=fake.street_address(),
                     bill_city=fake.city(),
-                    bill_country=m.business_country or "TR",
+                    bill_country=m.business_country or "US",
                     bill_zip=fake.postcode()[:20],
                     subtotal=subtotal,
                     discount_total=discount_total,
@@ -508,7 +509,7 @@ def run(*, seed: int = 42, reset: bool = True, session: Session | None = None) -
                                 order_id=o.order_id,
                                 merchant_id=m.merchant_id,
                                 warehouse_id=wh.warehouse_id,
-                                carrier=random.choice(["Yurtiçi", "MNG", "Aras", "UPS", "DHL"]),
+                                carrier=random.choice(["UPS", "DHL", "FedEx", "USPS", "TNT"]),
                                 tracking_number=fake.bothify("???##########"),
                                 status="delivered",
                                 ship_line1=o.ship_line1,

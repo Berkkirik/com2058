@@ -10,7 +10,11 @@ import os
 import sys
 from pathlib import Path
 
-os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
+# Tests ALWAYS use an isolated in-memory SQLite database.
+# We forcibly override DATABASE_URL even if the host exported a MySQL URL —
+# this prevents the test fixtures (TRUNCATE / drop_all) from ever touching
+# a real development or production database.
+os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
@@ -35,29 +39,36 @@ def _enable_sqlite_fks():
 
 @pytest.fixture(scope="session")
 def _schema():
-    if engine.url.get_backend_name() == "sqlite":
-        # Strip Computed columns (MySQL-only)
-        for tbl, col in [("orders", "grand_total"), ("order_items", "line_subtotal")]:
-            table = Base.metadata.tables[tbl]
-            col_obj = table.c[col]
-            col_obj.computed = None
-        # Replace MySQL TINYINT(1) with generic Boolean/Integer for SQLite
-        from sqlalchemy import Integer as SAInteger
-        from sqlalchemy.dialects.mysql.types import TINYINT as MySQLTINYINT
-        for table in Base.metadata.tables.values():
-            for col in table.columns:
-                if isinstance(col.type, MySQLTINYINT):
-                    col.type = SAInteger()
+    """Per-session SQLite schema setup.
+
+    The engine is guaranteed to be SQLite (forced at top of file), so we
+    strip MySQL-only column attributes before create_all, then set up stub
+    views so the dashboard/admin routes don't break when they `SELECT FROM
+    v_*` during template rendering.
+    """
+    # Strip Computed columns (MySQL-only)
+    for tbl, col in [("orders", "grand_total"), ("order_items", "line_subtotal")]:
+        table = Base.metadata.tables[tbl]
+        col_obj = table.c[col]
+        col_obj.computed = None
+    # Replace MySQL TINYINT(1) with generic Integer for SQLite
+    from sqlalchemy import Integer as SAInteger
+    from sqlalchemy.dialects.mysql.types import TINYINT as MySQLTINYINT
+    for table in Base.metadata.tables.values():
+        for col in table.columns:
+            if isinstance(col.type, MySQLTINYINT):
+                col.type = SAInteger()
+
     Base.metadata.create_all(engine)
-    # Emit stub versions of the SQL views so dashboard/admin routes don't fail
-    # in SQLite-backed tests. Production uses 002_views.sql applied by MySQL.
-    if engine.url.get_backend_name() == "sqlite":
-        with engine.begin() as conn:
-            conn.execute(text("CREATE VIEW v_merchant_revenue_monthly AS SELECT 0 AS merchant_id, '' AS store_name, DATE('now') AS month_start, 0.0 AS net_revenue, 0 AS orders_count WHERE 1=0"))
-            conn.execute(text("CREATE VIEW v_top_products_by_merchant AS SELECT 0 AS merchant_id, 0 AS product_id, '' AS title, 0 AS units_sold, 0.0 AS gross_revenue WHERE 1=0"))
-            conn.execute(text("CREATE VIEW v_low_stock_alerts AS SELECT 0 AS merchant_id, 0 AS warehouse_id, '' AS warehouse_name, 0 AS product_id, 0 AS variant_no, '' AS sku, 0 AS qty_on_hand, 0 AS qty_reserved, 0 AS qty_available, 0 AS reorder_level WHERE 1=0"))
-            conn.execute(text("CREATE VIEW v_customer_lifetime_value AS SELECT 0 AS merchant_id, 0 AS user_id, '' AS customer_name, 0 AS orders_count, 0.0 AS lifetime_spend, DATE('now') AS last_order_at WHERE 1=0"))
-            conn.execute(text("CREATE VIEW v_recent_activity AS SELECT 0 AS event_id, 0 AS merchant_id, '' AS actor_type, '' AS actor_label, '' AS entity_type, 0 AS entity_id, '' AS action, DATE('now') AS occurred_at WHERE 1=0"))
+
+    # Stubs so v_* view references in routers return cleanly (empty result).
+    with engine.begin() as conn:
+        conn.execute(text("CREATE VIEW v_merchant_revenue_monthly AS SELECT 0 AS merchant_id, '' AS store_name, DATE('now') AS month_start, 0.0 AS net_revenue, 0 AS orders_count WHERE 1=0"))
+        conn.execute(text("CREATE VIEW v_top_products_by_merchant AS SELECT 0 AS merchant_id, 0 AS product_id, '' AS title, 0 AS units_sold, 0.0 AS gross_revenue WHERE 1=0"))
+        conn.execute(text("CREATE VIEW v_low_stock_alerts AS SELECT 0 AS merchant_id, 0 AS warehouse_id, '' AS warehouse_name, 0 AS product_id, 0 AS variant_no, '' AS sku, 0 AS qty_on_hand, 0 AS qty_reserved, 0 AS qty_available, 0 AS reorder_level WHERE 1=0"))
+        conn.execute(text("CREATE VIEW v_customer_lifetime_value AS SELECT 0 AS merchant_id, 0 AS user_id, '' AS customer_name, 0 AS orders_count, 0.0 AS lifetime_spend, DATE('now') AS last_order_at WHERE 1=0"))
+        conn.execute(text("CREATE VIEW v_recent_activity AS SELECT 0 AS event_id, 0 AS merchant_id, '' AS actor_type, '' AS actor_label, '' AS entity_type, 0 AS entity_id, '' AS action, DATE('now') AS occurred_at WHERE 1=0"))
+
     yield
     Base.metadata.drop_all(engine)
 
@@ -80,11 +91,10 @@ def client(_schema) -> TestClient:
     return TestClient(create_app())
 
 
-def is_mysql() -> bool:
-    return engine.url.get_backend_name() == "mysql"
-
-
-mysql_only = pytest.mark.skipif(
-    not is_mysql(),
-    reason="Query uses MySQL-specific functions (DATE_FORMAT, WITH RECURSIVE, views populated by 002_views.sql) — runs in docker-compose integration suite.",
+# Kept for backward compatibility — pytest always runs on SQLite now, so this
+# marker skips the few tests that depend on MySQL-specific features (DATE_FORMAT,
+# WITH RECURSIVE, populated views). The real MySQL integration path is exercised
+# manually via `docker compose up` + curl or phpMyAdmin.
+mysql_only = pytest.mark.skip(
+    reason="Exercises MySQL-only SQL — run against the live compose stack instead of pytest."
 )

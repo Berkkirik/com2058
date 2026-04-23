@@ -46,7 +46,7 @@ class Settings(BaseSettings):
 
     # Seed
     faker_seed: int = Field(default=42)
-    seed_locale: str = Field(default="tr_TR")
+    seed_locale: str = Field(default="en_US")
 
 
 @lru_cache
