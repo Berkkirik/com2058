@@ -1,4 +1,4 @@
-"""Smoke tests for FastAPI routes — exercise routing, DB access, template rendering."""
+"""JSON API smoke tests — every endpoint returns well-formed data and honors tenant scoping."""
 from __future__ import annotations
 
 from datetime import date, datetime, timedelta
@@ -21,8 +21,8 @@ from storecraft.models import (
 
 @pytest.fixture
 def seeded(db):
-    """Insert minimum data for route tests."""
-    owner = User(email="owner@ex.com", password_hash="x", first_name="O", last_name="W")
+    """Minimum data for API tests: one merchant with one active product + variant + customer."""
+    owner = User(email="owner@ex.com", password_hash="x", first_name="Owen", last_name="Wilson")
     db.add(owner)
     db.flush()
     db.add(Staff(user_id=owner.user_id, hired_at=date(2024, 1, 1), title="Owner"))
@@ -33,15 +33,14 @@ def seeded(db):
         store_name="Demo Store",
         owner_user_id=owner.user_id,
         contact_email="demo@demo.com",
-        currency="TRY",
-        plan="basic",
+        currency="USD",
+        plan="pro",
         activated_at=datetime.utcnow(),
     )
     db.add(m)
     db.flush()
 
-    cat = Category(merchant_id=m.merchant_id, slug="gen", name="General")
-    db.add(cat)
+    db.add(Category(merchant_id=m.merchant_id, slug="gen", name="General"))
     db.flush()
 
     p = Product(
@@ -55,105 +54,137 @@ def seeded(db):
     db.flush()
     db.add(ProductVariant(product_id=p.product_id, variant_no=1, sku="SKU-W1", is_default=1))
 
-    cu_user = User(email="c@ex.com", password_hash="x", first_name="C", last_name="U")
+    cu_user = User(email="c@ex.com", password_hash="x", first_name="Cady", last_name="Heron")
     db.add(cu_user)
     db.flush()
     db.add(Customer(user_id=cu_user.user_id))
-
     db.commit()
     return {"merchant": m, "customer": cu_user, "product": p}
 
 
-def test_health_endpoint(client):
+def test_health(client):
     r = client.get("/health")
     assert r.status_code == 200
-    body = r.json()
-    assert body["status"] == "ok"
+    assert r.json()["status"] == "ok"
 
 
-def test_home_page_renders(client, seeded):
+def test_root_meta(client):
     r = client.get("/")
     assert r.status_code == 200
-    assert b"Merchant Directory" in r.content
-    assert b"Demo Store" in r.content
+    body = r.json()
+    assert body["name"] == "StoreCraft API"
+    assert "frontend" in body
 
 
-def test_storefront_renders(client, seeded):
-    r = client.get("/m/demo")
+def test_merchants_list(client, seeded):
+    r = client.get("/api/merchants")
     assert r.status_code == 200
-    assert b"Widget" in r.content
-    assert b"9.99" in r.content
+    data = r.json()
+    slugs = [m["slug"] for m in data]
+    assert "demo" in slugs
 
 
-def test_storefront_htmx_partial(client, seeded):
-    r = client.get("/m/demo", headers={"HX-Request": "true"})
+def test_merchant_detail(client, seeded):
+    r = client.get("/api/merchants/demo")
     assert r.status_code == 200
-    # Should be just the product grid, not the full page
-    assert b"<!doctype" not in r.content.lower()
-    assert b"product-grid" in r.content
+    data = r.json()
+    assert data["slug"] == "demo"
+    assert data["stats"]["products"] == 1
+    assert data["stats"]["categories"] == 1
+
+
+def test_merchant_404(client, seeded):
+    r = client.get("/api/merchants/nope")
+    assert r.status_code == 404
+
+
+def test_products_list(client, seeded):
+    r = client.get("/api/merchants/demo/products")
+    assert r.status_code == 200
+    products = r.json()
+    assert len(products) == 1
+    assert products[0]["title"] == "Widget"
+    assert products[0]["variants_count"] == 1
+
+
+def test_products_search_filter(client, seeded):
+    r = client.get("/api/merchants/demo/products?q=widg")
+    assert r.status_code == 200
+    assert len(r.json()) == 1
+
+    r = client.get("/api/merchants/demo/products?q=nothing")
+    assert r.status_code == 200
+    assert len(r.json()) == 0
 
 
 def test_product_detail(client, seeded):
     p = seeded["product"]
-    r = client.get(f"/m/demo/product/{p.product_id}")
+    r = client.get(f"/api/merchants/demo/products/{p.product_id}")
     assert r.status_code == 200
-    assert b"SKU-W1" in r.content
+    data = r.json()
+    assert data["title"] == "Widget"
+    assert len(data["variants"]) == 1
+    assert data["variants"][0]["sku"] == "SKU-W1"
 
 
 def test_product_detail_404(client, seeded):
-    r = client.get("/m/demo/product/99999")
+    r = client.get("/api/merchants/demo/products/999999")
     assert r.status_code == 404
 
 
-def test_unknown_merchant(client, seeded):
-    r = client.get("/m/nope")
-    assert r.status_code == 404
-
-
-def test_api_merchants(client, seeded):
-    r = client.get("/api/merchants")
+def test_categories_list(client, seeded):
+    r = client.get("/api/merchants/demo/categories")
     assert r.status_code == 200
-    data = r.json()
-    assert any(m["slug"] == "demo" for m in data)
-
-
-def test_api_products_per_merchant(client, seeded):
-    r = client.get("/api/merchants/demo/products")
-    assert r.status_code == 200
-    data = r.json()
-    assert any(p["title"] == "Widget" for p in data)
-
-
-def test_api_products_tenant_scoped(client, seeded):
-    """A second merchant's products should not appear under /m/demo."""
-    # Spin up another tenant in a fresh request (via API)
-    # Since /api only exposes read, we'll check that 'demo' list does not include unrelated items.
-    r = client.get("/api/merchants/demo/products")
-    data = r.json()
-    assert all(p["title"] == "Widget" for p in data)
-
-
-from tests.conftest import mysql_only
-
-
-@mysql_only
-def test_dashboard_renders(client, seeded):
-    """Dashboard uses views + MySQL-only DATE_FORMAT — exercised via docker compose integration."""
-    r = client.get("/dashboard/demo")
-    assert r.status_code == 200
-    assert b"Demo Store" in r.content
-    assert b"Dashboard" in r.content
-
-
-def test_admin_renders(client, seeded):
-    r = client.get("/admin")
-    assert r.status_code == 200
-    assert b"Platform Admin" in r.content
-    assert b"Demo Store" in r.content
+    categories = r.json()
+    assert any(c["name"] == "General" for c in categories)
 
 
 def test_orders_list_empty(client, seeded):
-    r = client.get("/dashboard/demo/orders")
+    r = client.get("/api/merchants/demo/orders")
     assert r.status_code == 200
-    # No orders seeded → just the header
-    assert b"Orders" in r.content
+    assert r.json() == []
+
+
+def test_cors_headers(client):
+    """Pre-flight-ish check that CORS middleware is wired."""
+    r = client.options("/api/merchants", headers={
+        "Origin": "http://localhost:5173",
+        "Access-Control-Request-Method": "GET",
+    })
+    # TestClient may not fully simulate CORS pre-flight; at minimum assert no 500.
+    assert r.status_code in (200, 204, 400)
+
+
+def test_tenant_isolation(client, db, seeded):
+    """Products from merchant B must not leak into merchant A's response."""
+    # Second merchant
+    owner2 = User(email="o2@ex.com", password_hash="x", first_name="Olive", last_name="Other")
+    db.add(owner2)
+    db.flush()
+    db.add(Staff(user_id=owner2.user_id, hired_at=date(2024, 1, 1), title="Owner"))
+    db.flush()
+    m2 = Merchant(
+        slug="other",
+        store_name="Other Store",
+        owner_user_id=owner2.user_id,
+        contact_email="o@o.com",
+        currency="USD",
+        plan="basic",
+    )
+    db.add(m2)
+    db.flush()
+    p2 = Product(
+        merchant_id=m2.merchant_id,
+        slug="leak",
+        title="Secret Leak Product",
+        base_price=Decimal("1.00"),
+        status="active",
+    )
+    db.add(p2)
+    db.commit()
+
+    r = client.get("/api/merchants/demo/products")
+    assert r.status_code == 200
+    titles = [p["title"] for p in r.json()]
+    assert "Secret Leak Product" not in titles
+    assert titles == ["Widget"]

@@ -58,5 +58,3 @@ def get_settings() -> Settings:
 # Convenient module-level references
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 SQL_DIR = PROJECT_ROOT / "sql"
-TEMPLATES_DIR = Path(__file__).resolve().parent / "templates"
-STATIC_DIR = Path(__file__).resolve().parent / "static"

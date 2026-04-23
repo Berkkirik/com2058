@@ -49,6 +49,19 @@ services:
       - ./scripts:/app/scripts
       - ./tests:/app/tests
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_started
+    environment:
+      VITE_BACKEND: http://app:8000
+    ports:
+      - "${FRONTEND_HOST_PORT:-5173}:5173"
+
   phpmyadmin:
     image: phpmyadmin:5
     restart: unless-stopped

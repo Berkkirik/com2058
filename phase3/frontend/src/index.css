@@ -1,0 +1,58 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body, #root { height: 100%; }
+  body {
+    @apply bg-paper text-ink font-sans antialiased;
+  }
+  h1, h2, h3 { @apply font-serif text-accent; }
+  h1 { @apply text-3xl md:text-4xl mb-1; }
+  h2 { @apply text-2xl mb-2 mt-6 pb-1 border-b border-border; }
+  h3 { @apply text-xl mt-4 mb-1; }
+  code { @apply bg-border/40 px-1.5 py-0.5 rounded text-[0.88em] font-mono; }
+  a { @apply text-accent hover:underline; }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center gap-2 rounded px-4 py-2 bg-accent text-white font-medium hover:bg-ink transition-colors;
+  }
+  .btn-outline {
+    @apply inline-flex items-center gap-2 rounded px-4 py-2 border border-border bg-white text-ink font-medium hover:border-accent transition-colors;
+  }
+  .input {
+    @apply w-full rounded border border-border bg-white px-3 py-2 focus:border-accent focus:outline-none;
+  }
+  .card {
+    @apply bg-white border border-border rounded-md p-4 md:p-5;
+  }
+  .kpi {
+    @apply bg-white border border-border border-l-4 border-l-accent rounded-md p-4;
+  }
+  .kpi-label {
+    @apply uppercase tracking-wide text-xs text-muted;
+  }
+  .kpi-value {
+    @apply font-serif text-2xl mt-1;
+  }
+  .badge {
+    @apply inline-block rounded-full px-2.5 py-0.5 text-xs uppercase tracking-wide bg-border/40 text-muted;
+  }
+  .badge-ok { @apply bg-emerald-100 text-emerald-800; }
+  .badge-warn { @apply bg-amber-100 text-amber-800; }
+  .badge-danger { @apply bg-rose-100 text-rose-800; }
+  .badge-info { @apply bg-sky-100 text-sky-800; }
+  table.data {
+    @apply w-full border-collapse bg-white border border-border rounded overflow-hidden;
+  }
+  table.data th {
+    @apply bg-border/40 text-left px-3 py-2 text-xs uppercase tracking-wide text-muted font-semibold;
+  }
+  table.data td {
+    @apply px-3 py-2 border-b border-border;
+  }
+  table.data tr:last-child td { @apply border-b-0; }
+  table.data tr:hover td { @apply bg-amber-50/40; }
+}

@@ -1,5 +1,5 @@
-"""FastAPI routers. Registered in storecraft.main via include_router calls."""
+"""FastAPI routers. JSON-only: only `api` is registered (HTML routers removed)."""
 
-from . import admin, api, catalog, dashboard, home, orders
+from . import api
 
-__all__ = ["admin", "api", "catalog", "dashboard", "home", "orders"]
+__all__ = ["api"]
