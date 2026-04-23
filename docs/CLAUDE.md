@@ -7,64 +7,24 @@
 
 | ID | Time | T | Title | Read |
 |----|------|---|-------|------|
-| #14532 | 10:27 PM | 🟣 | Added Aggregation Box and Derived Attribute to ER Diagram | ~528 |
+| #14529 | 10:16 PM | 🔵 | ER/EER Diagram Notation Standards Documented | ~705 |
+| #14525 | 10:15 PM | 🔵 | TaskNest ER+EER Diagram Structure Revealed | ~551 |
 
 ### Apr 21, 2026
 
 | ID | Time | T | Title | Read |
 |----|------|---|-------|------|
-| #14560 | 7:05 PM | ✅ | Created Phase 1 Data Requirements Document | ~223 |
-| #14555 | 1:53 PM | ✅ | Enhanced Multi-Tenant M:N Architecture Documentation | ~421 |
-| #14553 | 1:44 PM | 🔵 | Multi-tenant transformation complete: 14 workspace_id columns, 13 tenant FK arrows, 35 total FKs | ~453 |
-| #14552 | 1:43 PM | 🔄 | Adjust workspace FK arrow entry point to redistribute workspace references | ~356 |
-| #14551 | " | ✅ | FK Arrow Routing Refinement - Iteration 2 | ~380 |
-| #14550 | " | 🟣 | Added workspace_id foreign key to attachments table for multi-tenant isolation | ~428 |
-| #14549 | 1:42 PM | 🟣 | Add workspace_id tenant column to task_dependencies table | ~425 |
-| #14548 | 1:40 PM | 🟣 | Widen task_assignees table header for multi-tenant column addition | ~355 |
-| #14547 | " | 🔵 | Identified 6 tables requiring workspace_id foreign keys for multi-tenant architecture | ~397 |
-| #14546 | 12:19 PM | 🔴 | FK Arrow Routing in Relational Schema Diagram | ~273 |
-| #14544 | 12:00 PM | 🔵 | User clarified actual requirement: relational table diagrams, not ER conceptual models | ~473 |
-| #14543 | 11:52 AM | ✅ | Phase 2 explanation document stripped of all EER content | ~988 |
-| #14542 | 11:50 AM | ✅ | Phase 2 ER diagram scoped down from ER+EER to ER-only with textbook restyle | ~635 |
-| #14541 | 11:11 AM | 🔴 | Restored Missing AGGREGATION Element in Phase 2 ER/EER Diagram | ~493 |
-| #14540 | " | 🔴 | Restored Missing EER Aggregation Element to Phase 2 ER Diagram | ~611 |
+| #14564 | 7:26 PM | 🟣 | Added tenant and catalog entity group to StoreCraft data model | ~539 |
 
 ### Apr 23, 2026
 
 | ID | Time | T | Title | Read |
 |----|------|---|-------|------|
-| #14661 | 2:51 PM | ✅ | Entity count documentation corrected from 18 to 17 entity types | ~351 |
-| #14662 | " | 🔴 | R14 cardinality corrected for CUSTOMER-CARTS relationship | ~335 |
-| #14663 | " | ✅ | Cross-document consistency achieved for ER diagram documentation | ~356 |
-| #14659 | 2:08 PM | 🔴 | Corrected ACTIVITY_LOG cardinality from (0,N) to (0,1) in explanation document | ~381 |
-| #14658 | " | ✅ | Corrected R25 cardinality in documentation to match diagram fix | ~335 |
-| #14657 | 2:07 PM | ✅ | Corrected entity count documentation to distinguish entity types from ternary relationship | ~423 |
-| #14656 | " | 🔵 | Verified diagram footer metadata accuracy after logical corrections | ~348 |
-| #14654 | 2:05 PM | 🟣 | Applied total participation visual notation to all 14 required edges | ~459 |
-| #14630 | 1:55 PM | 🔴 | Eliminated edge crossings by splitting MERCHANTS hub routing into separate channels | ~405 |
-| #14629 | 1:53 PM | 🔵 | Geometry verification reveals one remaining edge-entity crossing | ~414 |
-| #14612 | 1:45 PM | 🔵 | Validated total participation constraint implementation across 53 relationship edges | ~393 |
-| #14611 | " | ✅ | Updated ER diagram legend to reflect thick-line total participation notation | ~308 |
-| #14610 | 1:44 PM | ✅ | Applied Chen notation total participation constraints to 16 relationships | ~412 |
-| #14604 | 1:32 PM | 🔵 | Verified ER diagram completeness against data requirements specification | ~395 |
-| #14603 | 1:29 PM | ✅ | Geometry audit confirms zero crossings and zero overlaps after fixes | ~399 |
-| #14602 | 1:26 PM | 🔄 | Rerouted PRODUCTS to REVIEWED_AS edge via left-side vertical channel | ~332 |
-| #14599 | " | 🔄 | Rerouted STAFF to OWNER_OF edge to avoid Zone A conflicts | ~304 |
-| #14598 | 1:23 PM | 🔴 | Adjusted PARENT_OF recursive loop waypoints to separate label collision | ~353 |
-| #14595 | 1:22 PM | 🔴 | Rerouted ed_merch_hascart edge via bottom channel to eliminate 6 entity crossings | ~399 |
-| #14589 | 1:18 PM | 🔵 | Subagent geometry audit confirms 17 edge-crossing violations with minimal fix strategy | ~523 |
-| #14587 | " | 🔵 | Geometric collision detection finds 17 edge-crossing violations in ER diagram | ~429 |
-| #14585 | 1:16 PM | 🔵 | ER diagram edge connection audit reveals entity-to-label misrouting | ~399 |
-| #14584 | 1:04 PM | 🔵 | Validated ER diagram layout quality with automated overlap detection | ~609 |
-| #14583 | 1:03 PM | 🔄 | Repositioned and compacted ER diagram legend to reduce visual clutter | ~466 |
-| #14582 | " | 🟣 | Created complete Chen ER diagram for StoreCraft in draw.io format | ~835 |
-| #14581 | 12:24 PM | 🔵 | Analyzed StoreCraft Phase 2 ER diagram structure and relationship inventory | ~592 |
-| #14580 | 12:17 PM | 🔵 | Validated existing Phase 2 ER diagram contains 17 StoreCraft entities | ~524 |
-| #14579 | 12:14 PM | 🟣 | Created Phase 2 ER diagram explanation document for StoreCraft | ~1192 |
-| #14578 | 12:12 PM | 🟣 | Created complete Chen ER diagram for StoreCraft with 18 entities and ternary relationship | ~1041 |
-| #14577 | 11:53 AM | ⚖️ | Changed temporal data type from TIMESTAMP to DATETIME for MySQL compatibility | ~472 |
-| #14576 | " | ⚖️ | Migrated target database platform from PostgreSQL to MySQL 8.0+ | ~583 |
-| #14575 | 11:47 AM | 🟣 | Completed Phase 1 data requirements with engagement, audit, relationships, and business rules | ~988 |
-| #14574 | 11:42 AM | 🟣 | Added commerce workflow entities with snapshot pattern and weak entity ORDER_ITEMS | ~742 |
-| #14573 | 11:40 AM | 🟣 | Added inventory management with ternary relationship pattern | ~533 |
+| #14601 | 1:26 PM | 🔴 | Fixed Ships-From Shipment Edge Routing | ~279 |
+| #14600 | " | 🔴 | Fixed Staff Works-For Relationship Edge Routing | ~250 |
+| #14597 | 1:22 PM | 🔴 | Fixed Product Variant References Edge Routing | ~265 |
+| #14596 | " | 🔴 | Fixed Merchant-Order Relationship Edge Routing | ~276 |
+| #14593 | 1:21 PM | 🔴 | Fixed Merchant-Warehouse Relationship Edge Routing | ~267 |
+| #14588 | 1:18 PM | 🔵 | Cardinality Label Positioning Analysis | ~308 |
+| #14586 | 1:17 PM | 🔵 | ER Diagram Structure Analysis | ~348 |
 </claude-mem-context>
