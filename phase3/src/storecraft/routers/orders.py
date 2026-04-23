@@ -29,8 +29,9 @@ def orders_list(request: Request, slug: str, db: Session = Depends(get_db)):
         .limit(100)
     ).scalars().all()
     return templates.TemplateResponse(
-        "orders_list.html",
-        {"request": request, "merchant": merchant, "orders": orders},
+        request=request,
+        name="orders_list.html",
+        context={"merchant": merchant, "orders": orders},
     )
 
 
@@ -53,6 +54,7 @@ def order_detail(request: Request, slug: str, order_id: int, db: Session = Depen
     if order is None:
         raise HTTPException(status_code=404, detail="order not found")
     return templates.TemplateResponse(
-        "order_detail.html",
-        {"request": request, "merchant": merchant, "order": order},
+        request=request,
+        name="order_detail.html",
+        context={"merchant": merchant, "order": order},
     )

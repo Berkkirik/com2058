@@ -30,6 +30,7 @@ def admin_home(request: Request, db: Session = Depends(get_db)):
         )
     ).mappings().all()
     return templates.TemplateResponse(
-        "admin.html",
-        {"request": request, "merchants": merchants, "recent_activity": list(recent)},
+        request=request,
+        name="admin.html",
+        context={"merchants": merchants, "recent_activity": list(recent)},
     )

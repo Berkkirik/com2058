@@ -21,5 +21,5 @@ def home(request: Request, db: Session = Depends(get_db)):
         select(Merchant).where(Merchant.suspended_at.is_(None)).order_by(Merchant.created_at.desc())
     ).scalars().all()
     return templates.TemplateResponse(
-        "home.html", {"request": request, "merchants": merchants}
+        request=request, name="home.html", context={"merchants": merchants}
     )

@@ -55,13 +55,15 @@ def storefront(
     # HTMX partial: only return the product grid when the request header is set
     if request.headers.get("HX-Request") == "true":
         return templates.TemplateResponse(
-            "_product_grid.html", {"request": request, "products": products, "merchant": merchant}
+            request=request,
+            name="_product_grid.html",
+            context={"products": products, "merchant": merchant},
         )
 
     return templates.TemplateResponse(
-        "storefront.html",
-        {
-            "request": request,
+        request=request,
+        name="storefront.html",
+        context={
             "merchant": merchant,
             "products": products,
             "categories": categories,
@@ -82,6 +84,7 @@ def product_detail(request: Request, slug: str, product_id: int, db: Session = D
     if product is None:
         raise HTTPException(status_code=404, detail="product not found")
     return templates.TemplateResponse(
-        "product_detail.html",
-        {"request": request, "merchant": merchant, "product": product},
+        request=request,
+        name="product_detail.html",
+        context={"merchant": merchant, "product": product},
     )

@@ -34,9 +34,9 @@ def dashboard(request: Request, slug: str, db: Session = Depends(get_db)):
     top_customers = showcase.q18_top_customers_per_merchant(db, merchant_id=merchant.merchant_id)
 
     return templates.TemplateResponse(
-        "dashboard.html",
-        {
-            "request": request,
+        request=request,
+        name="dashboard.html",
+        context={
             "merchant": merchant,
             "kpis": kpis,
             "month_kpis": month,

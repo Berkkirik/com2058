@@ -25,13 +25,19 @@ class Base(DeclarativeBase):
 
 _settings = get_settings()
 
-# SQLite (used in unit tests) doesn't accept pool_size/max_overflow; omit for it.
+# SQLite (used in unit tests) needs special handling:
+#  - :memory: is per-connection unless we use StaticPool to share one connection
+#  - pool_size/max_overflow aren't accepted by SQLite
 _engine_kwargs: dict = {
     "echo": _settings.db_echo,
     "pool_pre_ping": True,
     "future": True,
 }
-if not _settings.database_url.startswith("sqlite"):
+if _settings.database_url.startswith("sqlite"):
+    from sqlalchemy.pool import StaticPool
+    _engine_kwargs["connect_args"] = {"check_same_thread": False}
+    _engine_kwargs["poolclass"] = StaticPool
+else:
     _engine_kwargs["pool_size"] = _settings.db_pool_size
     _engine_kwargs["max_overflow"] = _settings.db_max_overflow
 
