@@ -34,7 +34,7 @@ The project spans four phases:
 |---|---|---|---|
 | 1 — Data Requirements | `docs/phase1_data_requirements.md` | 10 % | delivered |
 | 2 — ER Diagram (Chen notation) | `docs/phase2_er_diagram.drawio` | 20 % | delivered |
-| 3 — Implementation + Presentation | `phase3/` (MySQL + FastAPI + HTMX) | 60 % | delivered |
+| 3 — Implementation + Presentation | `phase3/` (MySQL + FastAPI + React SPA) | 60 % | delivered |
 | 4 — This report | `docs/phase4_report.md → .pdf` | 10 % | (you are reading it) |
 
 The system models 17 entity types and 25 relationships, maps them to a 22-table MySQL 8 schema, and exposes a working web application at `http://localhost:8000` after one `docker compose up` command. All code, SQL scripts and documentation live in a single Git repository (`Berkkirik/com2058`); this report's purpose is to connect the conceptual model to the running artifact and to demonstrate that the principal topics of the course — ER modeling, relational mapping, normalization, DML and query operations — have been exercised end-to-end.
@@ -234,45 +234,49 @@ All 22 relations satisfy 3NF; the relaxations in `order_items.sku` and `product_
 ## 6.1 Component diagram
 
 ```
- ┌────────────────────────┐      HTMX         ┌─────────────────────┐
- │  Jinja2 HTML templates │  ←───────────→    │   FastAPI routers   │
- │  (server-rendered)     │                   │  /m/*, /dashboard,  │
- │                        │                   │  /admin, /api       │
- └─────────┬──────────────┘                   └──────────┬──────────┘
-           │                                             │
-           └──────────────┐                ┌─────────────┘
-                          ▼                ▼
-                   ┌─────────────────────────────┐
-                   │  SQLAlchemy 2.0 ORM (22)    │
-                   │  one class per relation     │
-                   └──────────────┬──────────────┘
-                                  │
-                                  ▼
-                   ┌─────────────────────────────┐
-                   │  MySQL 8.0 (InnoDB)         │
-                   │  22 tables · 5 views        │
-                   │  · 3 triggers               │
-                   └─────────────────────────────┘
+ ┌────────────────────────┐    JSON /api    ┌─────────────────────┐
+ │  React 18 SPA          │  ←───────────→  │   FastAPI (JSON)    │
+ │  + Vite + TypeScript   │                 │   CORS enabled      │
+ │  + TanStack Query      │                 │                     │
+ │  + Tailwind CSS        │                 │                     │
+ └─────────┬──────────────┘                 └──────────┬──────────┘
+           │                                           │
+    Port 5173                               ┌──────────┘
+           │                                ▼
+                                 ┌─────────────────────────────┐
+                                 │  SQLAlchemy 2.0 ORM (22)    │
+                                 │  one class per relation     │
+                                 └──────────────┬──────────────┘
+                                                │
+                                                ▼
+                                 ┌─────────────────────────────┐
+                                 │  MySQL 8.0 (InnoDB)         │
+                                 │  22 tables · 5 views        │
+                                 │  · 3 triggers               │
+                                 └─────────────────────────────┘
 ```
 
 ## 6.2 Why these choices
 
-- **Jinja2 + HTMX** instead of React/Vue — no Node toolchain, same-origin cookies for free, server renders include the final HTML (better for screen readers and initial paint). HTMX attributes (`hx-get`, `hx-target`, `hx-trigger`) live directly on the templates; the FastAPI route distinguishes full-page vs partial via the `HX-Request` header.
-- **SQLAlchemy 2.0 declarative** — Mapped[] annotations make every column and relationship self-documenting. Compound PKs and compound FKs use `ForeignKeyConstraint` as a table-level argument.
-- **Pydantic-settings** for configuration — a single `Settings` class with environment-variable resolution. Tests override `DATABASE_URL=sqlite:///:memory:` without patching code.
-- **Docker Compose** — the MySQL container mounts `sql/` as its initdb directory, so on first boot the DDL, views and triggers are applied automatically.
+- **React 18 + Vite + TypeScript + Tailwind** — a standalone SPA in `phase3/frontend/`. Vite bundles TypeScript with near-zero config; Tailwind's utility-first CSS gives the design system directly in JSX. The typed API client (`src/lib/api.ts`) mirrors every FastAPI response shape, so contract drift is caught at compile time.
+- **TanStack Query (React Query)** for server state — caches responses per key, deduplicates in-flight requests, retries on network error. Each page component declares `useQuery({ queryKey, queryFn })` and receives `{ data, isLoading, error }` for declarative rendering. No manual `useState` / `useEffect` fetching code.
+- **Zustand** for the tiny bit of client-side global state (active merchant slug, potentially a UI theme). Intentionally lightweight versus Redux.
+- **SQLAlchemy 2.0 declarative** — `Mapped[]` annotations make every column and relationship self-documenting. Compound PKs and compound FKs use `ForeignKeyConstraint` at the table level.
+- **Pydantic-settings** for configuration — a single `Settings` class with environment-variable resolution. Tests force `DATABASE_URL=sqlite:///:memory:` at conftest module load so they never touch production-like databases.
+- **Docker Compose** — the MySQL container mounts `sql/` as its initdb directory, so on first boot the DDL, views and triggers are applied automatically. The frontend container runs Node.js 20 with Vite's `preview` server; its proxy config forwards `/api/*` to `app:8000`, so the SPA makes same-origin requests and CORS is dev-only belt-and-braces.
 
 ## 6.3 Request lifecycle
 
-A request to `GET /dashboard/berkin-kitapcisi` flows:
+A user opening `http://localhost:5173/dashboard/helix-books` triggers:
 
-1. Uvicorn accepts the HTTP request.
-2. FastAPI's router matches against `routers/dashboard.py:dashboard`.
-3. The `get_db()` dependency yields a `Session` bound to the configured engine.
-4. The handler runs five SQL queries via `queries/showcase.py` (Q14, Q18, Q21, plus two view-backed helpers).
-5. Results are packed into a context dictionary and passed to Jinja2's `TemplateResponse`.
-6. `dashboard.html` (which extends `base.html`) renders KPI cards, top-products table, low-stock alerts and top-customers leaderboard.
-7. Response headers include `content-type: text/html` for full pages; the HTMX-partial path returns an HTML fragment directly.
+1. The browser loads the React bundle from Vite's preview server (port 5173).
+2. React Router matches `/dashboard/:slug` and renders `DashboardPage`.
+3. TanStack Query fires six `useQuery` hooks in parallel — merchant detail, Q14 KPI, Q21 this-month, top products, low-stock alerts, Q18 top customers — each a separate `fetch()` to `/api/queries/*` (proxied through Vite to `app:8000`).
+4. FastAPI's router matches each request; the `get_db()` dependency yields a `Session` to the MySQL engine.
+5. Handlers delegate to `queries/showcase.py` which emits annotated SQL (`SELECT … FROM v_top_products_by_merchant WHERE merchant_id = :mid`).
+6. MySQL returns rows; SQLAlchemy converts them to mappings; the router JSON-encodes them and returns `200 OK`.
+7. TanStack Query caches each response and supplies `{ data, isLoading, error }` to the component; the JSX renders KPI tiles, tables, badges.
+8. Subsequent navigations to the same slug hit the cache (30 s stale time), so the user's experience is instant once data is warm.
 
 \clearpage
 
@@ -398,7 +402,7 @@ Representative assertions:
 - **Weak-entity cascade**: deleting a PRODUCTS row drops its PRODUCT_VARIANTS and INVENTORY rows without orphans.
 - **Tenant isolation**: two merchants can own a product with `slug = 'sharedslug'` simultaneously without collision because the unique key is composite `(merchant_id, slug)`.
 - **Ternary PK**: inserting two `inventory` rows with the same `(product_id, variant_no, warehouse_id)` triggers a `PRIMARY KEY` violation.
-- **HTMX partial**: the `/m/{slug}` endpoint returns an HTML fragment (no `<!doctype>`) when the `HX-Request: true` header is present, and the full page otherwise.
+- **CORS enforcement**: the JSON API responds to `Access-Control-Request-Method: GET` with appropriate CORS headers; the SPA and backend share origin in production via Vite's proxy, and dev-time CORS is allow-all.
 
 \clearpage
 
@@ -412,9 +416,9 @@ Three seeded merchants with plan badges and direct links to catalog/dashboard/or
 
 ## 9.2 Public storefront
 
-![Storefront with HTMX search](screenshot_storefront.png){ width=85% }
+![Storefront with live React search](screenshot_storefront.png){ width=85% }
 
-Typing into the search box triggers `hx-get` with a 300 ms debounce and swaps only the product grid — no full-page reload.
+The search input is a controlled React component; each keystroke updates the `q` state, which becomes part of the TanStack Query key — when the key changes the query refetches `/api/merchants/:slug/products?q=…` and the product grid re-renders. No full-page reload.
 
 ## 9.3 Dashboard
 
@@ -434,7 +438,7 @@ Line items, payments, shipments, discount usages — the complete commerce facts
 
 StoreCraft demonstrates that a realistic multi-tenant commerce schema can be specified conceptually (Phase 1), modelled as an ER diagram in Chen notation (Phase 2), and implemented end-to-end (Phase 3) in a reproducible Docker Compose environment. The system exercises every ER feature covered by the course — specialization, weak entities, identifying relationships, ternary, recursive, M:N bridges — and every query operator expected for a final project: joins, subqueries, aggregates, window functions, CTEs including recursive, views, transactions.
 
-**What worked.** The SQLAlchemy 2.0 declarative ORM tracks the 22-table schema with very little boilerplate; compound FKs and generated columns translated cleanly into Python types. MySQL 8's `GENERATED ... STORED` eliminated a whole class of derived-value bugs. Deterministic Faker seeding made the demo auditable. The Jinja2 + HTMX frontend was implementable in a single codebase with no separate build pipeline, which kept the Docker image small.
+**What worked.** The SQLAlchemy 2.0 declarative ORM tracks the 22-table schema with very little boilerplate; compound FKs and generated columns translated cleanly into Python types. MySQL 8's `GENERATED ... STORED` eliminated a whole class of derived-value bugs. Deterministic Faker seeding made the demo auditable. The React + TanStack Query pairing is a great fit for this kind of CRUD-heavy dashboard — every page declares what it needs and lets the cache decide when to refetch, so the component code stays free of imperative loading logic. TypeScript interfaces mirroring the FastAPI response shapes caught two API-contract drifts during development that would otherwise have shipped as runtime bugs.
 
 **What I would do differently.** The polymorphic `activity_log` pattern is conceptually simple but makes ad-hoc queries hard (`entity_id` without an FK means EXPLAIN cannot propagate row counts). In a production system I would invest in an `activity_log_orders`, `_products`, … pattern and view-union them back. The `DISCOUNTS.used_count` denormalization would also be better expressed as a view over `discount_usages`.
 

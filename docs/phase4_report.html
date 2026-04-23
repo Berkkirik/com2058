@@ -10,6 +10,153 @@
     /* Default styles provided by pandoc.
     ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
     */
+    html {
+      font-size: 11pt;
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1b4965;
+    }
+    a:visited {
+      color: #1b4965;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      white-space: pre-wrap;
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
     span.smallcaps{font-variant: small-caps;}
     div.columns{display: flex; gap: min(4vw, 1.5em);}
     div.column{flex: auto; overflow-x: auto;}
@@ -90,7 +237,6 @@
     code span.vs { color: #4070a0; } /* VerbatimString */
     code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
   </style>
-  <link rel="stylesheet" href="/dev/fd/11" />
   
 </head>
 <body>
@@ -140,7 +286,7 @@ Spring 2026).</p>
 </tr>
 <tr>
 <td>3 — Implementation + Presentation</td>
-<td><code>phase3/</code> (MySQL + FastAPI + HTMX)</td>
+<td><code>phase3/</code> (MySQL + FastAPI + React SPA)</td>
 <td>60 %</td>
 <td>delivered</td>
 </tr>
@@ -714,65 +860,84 @@ about what constraint system to enforce.</p>
 deliberate historical snapshots, not normalization defects.</p>
 <h1 id="implementation-architecture">6. Implementation Architecture</h1>
 <h2 id="component-diagram">6.1 Component diagram</h2>
-<pre><code> ┌────────────────────────┐      HTMX         ┌─────────────────────┐
- │  Jinja2 HTML templates │  ←───────────→    │   FastAPI routers   │
- │  (server-rendered)     │                   │  /m/*, /dashboard,  │
- │                        │                   │  /admin, /api       │
- └─────────┬──────────────┘                   └──────────┬──────────┘
-           │                                             │
-           └──────────────┐                ┌─────────────┘
-                          ▼                ▼
-                   ┌─────────────────────────────┐
-                   │  SQLAlchemy 2.0 ORM (22)    │
-                   │  one class per relation     │
-                   └──────────────┬──────────────┘
-                                  │
-                                  ▼
-                   ┌─────────────────────────────┐
-                   │  MySQL 8.0 (InnoDB)         │
-                   │  22 tables · 5 views        │
-                   │  · 3 triggers               │
-                   └─────────────────────────────┘</code></pre>
+<pre><code> ┌────────────────────────┐    JSON /api    ┌─────────────────────┐
+ │  React 18 SPA          │  ←───────────→  │   FastAPI (JSON)    │
+ │  + Vite + TypeScript   │                 │   CORS enabled      │
+ │  + TanStack Query      │                 │                     │
+ │  + Tailwind CSS        │                 │                     │
+ └─────────┬──────────────┘                 └──────────┬──────────┘
+           │                                           │
+    Port 5173                               ┌──────────┘
+           │                                ▼
+                                 ┌─────────────────────────────┐
+                                 │  SQLAlchemy 2.0 ORM (22)    │
+                                 │  one class per relation     │
+                                 └──────────────┬──────────────┘
+                                                │
+                                                ▼
+                                 ┌─────────────────────────────┐
+                                 │  MySQL 8.0 (InnoDB)         │
+                                 │  22 tables · 5 views        │
+                                 │  · 3 triggers               │
+                                 └─────────────────────────────┘</code></pre>
 <h2 id="why-these-choices">6.2 Why these choices</h2>
 <ul>
-<li><strong>Jinja2 + HTMX</strong> instead of React/Vue — no Node
-toolchain, same-origin cookies for free, server renders include the
-final HTML (better for screen readers and initial paint). HTMX
-attributes (<code>hx-get</code>, <code>hx-target</code>,
-<code>hx-trigger</code>) live directly on the templates; the FastAPI
-route distinguishes full-page vs partial via the <code>HX-Request</code>
-header.</li>
-<li><strong>SQLAlchemy 2.0 declarative</strong> — Mapped[] annotations
-make every column and relationship self-documenting. Compound PKs and
-compound FKs use <code>ForeignKeyConstraint</code> as a table-level
-argument.</li>
+<li><strong>React 18 + Vite + TypeScript + Tailwind</strong> — a
+standalone SPA in <code>phase3/frontend/</code>. Vite bundles TypeScript
+with near-zero config; Tailwind’s utility-first CSS gives the design
+system directly in JSX. The typed API client
+(<code>src/lib/api.ts</code>) mirrors every FastAPI response shape, so
+contract drift is caught at compile time.</li>
+<li><strong>TanStack Query (React Query)</strong> for server state —
+caches responses per key, deduplicates in-flight requests, retries on
+network error. Each page component declares
+<code>useQuery({ queryKey, queryFn })</code> and receives
+<code>{ data, isLoading, error }</code> for declarative rendering. No
+manual <code>useState</code> / <code>useEffect</code> fetching
+code.</li>
+<li><strong>Zustand</strong> for the tiny bit of client-side global
+state (active merchant slug, potentially a UI theme). Intentionally
+lightweight versus Redux.</li>
+<li><strong>SQLAlchemy 2.0 declarative</strong> — <code>Mapped[]</code>
+annotations make every column and relationship self-documenting.
+Compound PKs and compound FKs use <code>ForeignKeyConstraint</code> at
+the table level.</li>
 <li><strong>Pydantic-settings</strong> for configuration — a single
 <code>Settings</code> class with environment-variable resolution. Tests
-override <code>DATABASE_URL=sqlite:///:memory:</code> without patching
-code.</li>
+force <code>DATABASE_URL=sqlite:///:memory:</code> at conftest module
+load so they never touch production-like databases.</li>
 <li><strong>Docker Compose</strong> — the MySQL container mounts
 <code>sql/</code> as its initdb directory, so on first boot the DDL,
-views and triggers are applied automatically.</li>
+views and triggers are applied automatically. The frontend container
+runs Node.js 20 with Vite’s <code>preview</code> server; its proxy
+config forwards <code>/api/*</code> to <code>app:8000</code>, so the SPA
+makes same-origin requests and CORS is dev-only belt-and-braces.</li>
 </ul>
 <h2 id="request-lifecycle">6.3 Request lifecycle</h2>
-<p>A request to <code>GET /dashboard/berkin-kitapcisi</code> flows:</p>
+<p>A user opening
+<code>http://localhost:5173/dashboard/helix-books</code> triggers:</p>
 <ol type="1">
-<li>Uvicorn accepts the HTTP request.</li>
-<li>FastAPI’s router matches against
-<code>routers/dashboard.py:dashboard</code>.</li>
-<li>The <code>get_db()</code> dependency yields a <code>Session</code>
-bound to the configured engine.</li>
-<li>The handler runs five SQL queries via
-<code>queries/showcase.py</code> (Q14, Q18, Q21, plus two view-backed
-helpers).</li>
-<li>Results are packed into a context dictionary and passed to Jinja2’s
-<code>TemplateResponse</code>.</li>
-<li><code>dashboard.html</code> (which extends <code>base.html</code>)
-renders KPI cards, top-products table, low-stock alerts and
-top-customers leaderboard.</li>
-<li>Response headers include <code>content-type: text/html</code> for
-full pages; the HTMX-partial path returns an HTML fragment
-directly.</li>
+<li>The browser loads the React bundle from Vite’s preview server (port
+5173).</li>
+<li>React Router matches <code>/dashboard/:slug</code> and renders
+<code>DashboardPage</code>.</li>
+<li>TanStack Query fires six <code>useQuery</code> hooks in parallel —
+merchant detail, Q14 KPI, Q21 this-month, top products, low-stock
+alerts, Q18 top customers — each a separate <code>fetch()</code> to
+<code>/api/queries/*</code> (proxied through Vite to
+<code>app:8000</code>).</li>
+<li>FastAPI’s router matches each request; the <code>get_db()</code>
+dependency yields a <code>Session</code> to the MySQL engine.</li>
+<li>Handlers delegate to <code>queries/showcase.py</code> which emits
+annotated SQL
+(<code>SELECT … FROM v_top_products_by_merchant WHERE merchant_id = :mid</code>).</li>
+<li>MySQL returns rows; SQLAlchemy converts them to mappings; the router
+JSON-encodes them and returns <code>200 OK</code>.</li>
+<li>TanStack Query caches each response and supplies
+<code>{ data, isLoading, error }</code> to the component; the JSX
+renders KPI tiles, tables, badges.</li>
+<li>Subsequent navigations to the same slug hit the cache (30 s stale
+time), so the user’s experience is instant once data is warm.</li>
 </ol>
 <h1 id="query-showcase-highlights">7. Query Showcase (highlights)</h1>
 <p><code>sql/999_showcase_queries.sql</code> contains 25 numbered
@@ -887,10 +1052,10 @@ because the unique key is composite
 <li><strong>Ternary PK</strong>: inserting two <code>inventory</code>
 rows with the same <code>(product_id, variant_no, warehouse_id)</code>
 triggers a <code>PRIMARY KEY</code> violation.</li>
-<li><strong>HTMX partial</strong>: the <code>/m/{slug}</code> endpoint
-returns an HTML fragment (no <code>&lt;!doctype&gt;</code>) when the
-<code>HX-Request: true</code> header is present, and the full page
-otherwise.</li>
+<li><strong>CORS enforcement</strong>: the JSON API responds to
+<code>Access-Control-Request-Method: GET</code> with appropriate CORS
+headers; the SPA and backend share origin in production via Vite’s
+proxy, and dev-time CORS is allow-all.</li>
 </ul>
 <h1 id="results-and-screenshots">9. Results and Screenshots</h1>
 <h2 id="merchant-directory-home">9.1 Merchant directory (home)</h2>
@@ -904,11 +1069,15 @@ catalog/dashboard/orders.</p>
 <h2 id="public-storefront">9.2 Public storefront</h2>
 <figure>
 <img src="screenshot_storefront.png" style="width:85.0%"
-alt="Storefront with HTMX search" />
-<figcaption aria-hidden="true">Storefront with HTMX search</figcaption>
+alt="Storefront with live React search" />
+<figcaption aria-hidden="true">Storefront with live React
+search</figcaption>
 </figure>
-<p>Typing into the search box triggers <code>hx-get</code> with a 300 ms
-debounce and swaps only the product grid — no full-page reload.</p>
+<p>The search input is a controlled React component; each keystroke
+updates the <code>q</code> state, which becomes part of the TanStack
+Query key — when the key changes the query refetches
+<code>/api/merchants/:slug/products?q=…</code> and the product grid
+re-renders. No full-page reload.</p>
 <h2 id="dashboard">9.3 Dashboard</h2>
 <figure>
 <img src="screenshot_dashboard.png" style="width:85.0%"
@@ -942,8 +1111,12 @@ tracks the 22-table schema with very little boilerplate; compound FKs
 and generated columns translated cleanly into Python types. MySQL 8’s
 <code>GENERATED ... STORED</code> eliminated a whole class of
 derived-value bugs. Deterministic Faker seeding made the demo auditable.
-The Jinja2 + HTMX frontend was implementable in a single codebase with
-no separate build pipeline, which kept the Docker image small.</p>
+The React + TanStack Query pairing is a great fit for this kind of
+CRUD-heavy dashboard — every page declares what it needs and lets the
+cache decide when to refetch, so the component code stays free of
+imperative loading logic. TypeScript interfaces mirroring the FastAPI
+response shapes caught two API-contract drifts during development that
+would otherwise have shipped as runtime bugs.</p>
 <p><strong>What I would do differently.</strong> The polymorphic
 <code>activity_log</code> pattern is conceptually simple but makes
 ad-hoc queries hard (<code>entity_id</code> without an FK means EXPLAIN
