@@ -25,14 +25,17 @@ class Base(DeclarativeBase):
 
 _settings = get_settings()
 
-engine = create_engine(
-    _settings.database_url,
-    echo=_settings.db_echo,
-    pool_pre_ping=True,
-    pool_size=_settings.db_pool_size,
-    max_overflow=_settings.db_max_overflow,
-    future=True,
-)
+# SQLite (used in unit tests) doesn't accept pool_size/max_overflow; omit for it.
+_engine_kwargs: dict = {
+    "echo": _settings.db_echo,
+    "pool_pre_ping": True,
+    "future": True,
+}
+if not _settings.database_url.startswith("sqlite"):
+    _engine_kwargs["pool_size"] = _settings.db_pool_size
+    _engine_kwargs["max_overflow"] = _settings.db_max_overflow
+
+engine = create_engine(_settings.database_url, **_engine_kwargs)
 
 SessionLocal = sessionmaker(
     bind=engine,
