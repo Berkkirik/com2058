@@ -137,8 +137,10 @@ def run(*, seed: int = 42, reset: bool = True, session: Session | None = None) -
             log.info("TRUNCATE all seed tables")
             with engine.begin() as conn:
                 conn.execute(text("SET foreign_key_checks = 0"))
-                rows = conn.execute(text("SHOW TABLES")).fetchall()
-                for (tbl,) in rows:
+                # SHOW FULL TABLES distinguishes 'BASE TABLE' from 'VIEW'.
+                rows = conn.execute(text("SHOW FULL TABLES WHERE Table_type = 'BASE TABLE'")).fetchall()
+                for row in rows:
+                    tbl = row[0]
                     conn.execute(text(f"TRUNCATE TABLE `{tbl}`"))
                 conn.execute(text("SET foreign_key_checks = 1"))
 
@@ -597,11 +599,12 @@ def run(*, seed: int = 42, reset: bool = True, session: Session | None = None) -
 
         session.commit()
 
-        # Summary
-        counts = {
-            tbl.name: session.execute(text(f"SELECT COUNT(*) FROM {tbl.name}")).scalar()
-            for tbl in __import__("storecraft").db.Base.metadata.sorted_tables
-        }
+        # Summary — count rows in each base table (skip views)
+        from storecraft.db import Base as _Base
+        counts = {}
+        for tbl in _Base.metadata.sorted_tables:
+            n = session.execute(text(f"SELECT COUNT(*) FROM {tbl.name}")).scalar() or 0
+            counts[tbl.name] = n
         total = sum(counts.values())
         log.info("seed complete — %d rows across %d tables", total, len(counts))
         for name, n in counts.items():
