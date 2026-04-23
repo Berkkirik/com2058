@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Orders · {{ merchant.store_name }}{% endblock %}
+{% block content %}
+<p><a href="/dashboard/{{ merchant.slug }}">← Dashboard</a></p>
+<h1>Orders · {{ merchant.store_name }}</h1>
+<p class="tagline">{{ orders|length }} most-recent orders.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Customer</th>
+      <th>Status</th>
+      <th>Lines</th>
+      <th>Total</th>
+      <th>Placed</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for o in orders %}
+    <tr>
+      <td><a href="/dashboard/{{ merchant.slug }}/orders/{{ o.order_id }}"><code>{{ o.order_number }}</code></a></td>
+      <td>{{ o.customer.user.full_name if o.customer and o.customer.user else o.customer_user_id }}</td>
+      <td>
+        <span class="badge
+          {%- if o.status == 'paid' %} badge-ok
+          {%- elif o.status == 'fulfilled' %} badge-ok
+          {%- elif o.status == 'pending' %} badge-warn
+          {%- elif o.status in ('canceled','refunded') %} badge-danger
+          {%- endif %}">
+          {{ o.status }}
+        </span>
+      </td>
+      <td>{{ o.items|length }}</td>
+      <td>{{ "%.2f"|format(o.grand_total) }} {{ o.currency }}</td>
+      <td>{{ o.placed_at.strftime('%Y-%m-%d %H:%M') }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

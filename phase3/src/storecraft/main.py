@@ -41,7 +41,15 @@ def create_app() -> FastAPI:
     # Static + templates
     if STATIC_DIR.exists():
         app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
-    _ = Jinja2Templates(directory=str(TEMPLATES_DIR))  # placeholder for routers
+
+    # Register routers (lazy imports to avoid circularity at module load)
+    from .routers import admin, api, catalog, dashboard, home, orders
+    app.include_router(home.router)
+    app.include_router(catalog.router)
+    app.include_router(dashboard.router)
+    app.include_router(orders.router)
+    app.include_router(admin.router)
+    app.include_router(api.router)
 
     @app.get("/health", tags=["meta"])
     def health() -> JSONResponse:
@@ -52,15 +60,6 @@ def create_app() -> FastAPI:
             return JSONResponse({"status": "ok", "db": "up"})
         except Exception as exc:
             return JSONResponse({"status": "degraded", "db": "down", "error": str(exc)}, status_code=503)
-
-    @app.get("/", tags=["meta"])
-    def root() -> dict[str, str]:
-        return {
-            "name": "StoreCraft",
-            "phase": "3",
-            "docs": "/docs",
-            "health": "/health",
-        }
 
     return app
 

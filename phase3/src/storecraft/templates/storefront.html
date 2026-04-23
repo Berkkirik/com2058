@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}{{ merchant.store_name }} · Catalog{% endblock %}
+{% block content %}
+<h1>{{ merchant.store_name }}</h1>
+<p class="tagline">
+  <span class="badge badge-info">{{ merchant.plan }}</span>
+  {% if merchant.business_city %}· {{ merchant.business_city }}{% endif %}
+  · <a href="/dashboard/{{ merchant.slug }}">Dashboard</a>
+</p>
+
+<form hx-get="/m/{{ merchant.slug }}" hx-target="#products" hx-trigger="input delay:300ms from:input[name='q'], submit" hx-swap="innerHTML">
+  <input name="q" class="input" placeholder="Search products…" value="{{ query }}" style="width: 280px">
+  <button class="btn" type="submit">Search</button>
+</form>
+
+<h2>Products ({{ products|length }})</h2>
+
+<div id="products">
+  {% include '_product_grid.html' %}
+</div>
+
+{% if categories %}
+<h2>Categories</h2>
+<div style="display:flex; flex-wrap: wrap; gap:0.4rem">
+  {% for c in categories %}
+  <span class="badge badge-info">{{ c.name }}</span>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

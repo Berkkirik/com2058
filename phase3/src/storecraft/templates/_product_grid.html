@@ -1,0 +1,11 @@
+<div class="product-grid">
+  {% for p in products %}
+  <div class="product-card">
+    <h4><a href="/m/{{ merchant.slug }}/product/{{ p.product_id }}">{{ p.title }}</a></h4>
+    <p class="price">{{ "%.2f"|format(p.base_price) }} {{ p.currency }}</p>
+    <p class="muted">{{ p.product_type }} · {{ p.variants|length }} variant{% if p.variants|length != 1 %}s{% endif %}</p>
+  </div>
+  {% else %}
+  <p class="muted">No products match your search.</p>
+  {% endfor %}
+</div>
