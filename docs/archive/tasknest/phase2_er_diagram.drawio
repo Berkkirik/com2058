@@ -1,0 +1,855 @@
+<mxfile host="drawio-plugin" modified="2026-04-21T11:54:43.079Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36" etag="24vZUmvqViGnQQaWfGA5" version="22.1.22" type="embed" pages="2">
+  <diagram name="1 · ER Schema" id="tasknest-core">
+    <mxGraphModel dx="456" dy="322" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2600" pageHeight="1600" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="p1_title" value="TaskNest — ER Schema (Fig 7.15 style)&lt;br&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="900" y="10" width="700" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_legend" value="NOTATION (Elmasri 6e Ch07)&#xa;• Rectangle = Entity &#xa;• Double rectangle = Weak entity &#xa;• Diamond = Relationship &#xa;• Double diamond = Identifying rel. &#xa;• (min,max) = cardinality, entity side &#xa;• Double line = Total participation &#xa;• Single line = Partial participation" style="text;html=1;strokeColor=#000000;fillColor=#ffffff;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=9;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="40" y="30" width="300" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="e_ws" value="workspace_id · slug · name · created_at" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="380" y="222" width="200" height="53" as="geometry" />
+        </mxCell>
+        <mxCell id="r_contains" value="CONTAINS" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="680" y="218" width="110" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="e_proj_title" value="PROJECTS" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=11;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="890" y="195" width="230" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="e_proj" value="project_id · workspace_id (FK) · slug · name · created_by · created_at · archived_at" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="890" y="217" width="230" height="73" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e_ws_contains" value="(0,N)" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;jettySize=auto;orthogonalLoop=1;fontSize=10;strokeColor=#000000;fontFamily=Times New Roman" parent="1" source="e_ws" target="r_contains" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e_contains_proj" value="(1,1)" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;jettySize=auto;orthogonalLoop=1;fontSize=10;strokeColor=#000000;fontFamily=Times New Roman;shape=link" parent="1" source="r_contains" target="e_proj" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r_has" value="HAS" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1210" y="218" width="110" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="e_sprint_title" value="SPRINTS" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=11;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1400" y="195" width="220" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="e_sprint" value="sprint_id · project_id (FK) · name · started_at · ended_at · goal" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1400" y="217" width="220" height="73" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e_proj_has" value="(0,N)" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;fontSize=10;strokeColor=#000000;fontFamily=Times New Roman" parent="1" source="e_proj" target="r_has" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e_has_sprint" value="(1,1)" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;fontSize=10;strokeColor=#000000;fontFamily=Times New Roman;shape=link" parent="1" source="r_has" target="e_sprint" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_users_title" value="USERS" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=11;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="80" y="450" width="220" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="e_users" value="user_id · email · password_hash · display_name · KIND · created_at" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="80" y="472" width="220" height="73" as="geometry" />
+        </mxCell>
+        <mxCell id="r_member" value="HAS_MEMBER&#xa;{role}" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="355" y="333" width="110" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e_users_member" value="(0,N)" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;fontSize=10;strokeColor=#000000;fontFamily=Times New Roman" parent="1" source="e_users" target="r_member" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e_ws_member" value="(1,N)" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;fontSize=10;strokeColor=#000000;fontFamily=Times New Roman;shape=link" parent="1" source="r_member" target="e_ws" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r_onproj" value="ON_PROJECT&#xa;{role}" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="610" y="458" width="110" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e_users_onproj" value="(0,N)" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;fontSize=10;strokeColor=#000000;fontFamily=Times New Roman" parent="1" source="e_users" target="r_onproj" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e_onproj_proj" value="(0,N)" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;fontSize=10;strokeColor=#000000;fontFamily=Times New Roman" parent="1" source="r_onproj" target="e_proj" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1040" y="486" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_tasks_title" value="TASKS" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=11;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="980" y="594" width="280" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="e_tasks" value="task_id · workspace_id (FK) · project_id (FK) · sprint_id (FK,null) · parent_task_id (FK,null) · status_id (FK) · title · description · priority · created_by · due_date · completed_at · created_at · updated_at" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="980" y="616" width="280" height="128" as="geometry" />
+        </mxCell>
+        <mxCell id="r_has_task" value="HAS_TASK" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="970" y="500" width="110" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e_proj_hastask" value="(0,N)" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;fontSize=10;strokeColor=#000000;fontFamily=Times New Roman;entryX=0.452;entryY=-0.038;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" target="r_has_task" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="995" y="290" as="sourcePoint" />
+            <mxPoint x="1015" y="463" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p1_e_hastask_task" value="(1,1)" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;fontSize=10;strokeColor=#000000;fontFamily=Times New Roman;shape=link" parent="1" source="r_has_task" target="e_tasks" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r_inc" value="INCLUDES" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1420" y="453" width="110" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e_sprint_inc" value="(0,N)" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;fontSize=10;strokeColor=#000000;fontFamily=Times New Roman" parent="1" source="e_sprint" target="r_inc" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e_inc_task" value="(0,1)" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;fontSize=10;strokeColor=#000000;fontFamily=Times New Roman" parent="1" source="r_inc" target="e_tasks" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_status_title" value="TASK_STATUSES" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=11;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1780" y="200" width="220" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="e_status" value="status_id · workspace_id (FK) · name · display_order · is_terminal" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1780" y="222" width="220" height="63" as="geometry" />
+        </mxCell>
+        <mxCell id="r_defines" value="DEFINES" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1670" y="218" width="110" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e_ws_defines" value="(1,N)" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;fontSize=10;strokeColor=#000000;fontFamily=Times New Roman;shape=link" parent="1" source="e_ws_title" target="r_defines" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="500" y="90" />
+              <mxPoint x="1725" y="90" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p1_e_defines_status" value="(1,1)" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;fontSize=10;strokeColor=#000000;fontFamily=Times New Roman;shape=link" parent="1" source="r_defines" target="e_status" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r_has_status" value="HAS_STATUS" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1835" y="403" width="110" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e_status_hasstatus" value="(0,N)" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;fontSize=10;strokeColor=#000000;fontFamily=Times New Roman" parent="1" source="e_status" target="r_has_status" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e_hasstatus_task" value="(1,1)" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;fontSize=10;strokeColor=#000000;fontFamily=Times New Roman;shape=link" parent="1" source="r_has_status" target="e_tasks" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1300" y="430" />
+              <mxPoint x="1300" y="680" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="r_assign" value="ASSIGNED_TO&#xa;{role}" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="545" y="688" width="110" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e_users_assign" value="(0,N)" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;fontSize=10;strokeColor=#000000;fontFamily=Times New Roman" parent="1" source="e_users" target="r_assign" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="230" y="715" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p1_e_assign_task" value="(0,N)" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;fontSize=10;strokeColor=#000000;fontFamily=Times New Roman" parent="1" source="r_assign" target="e_tasks" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r_subtask" value="SUBTASK_OF" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="805" y="1028" width="110" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e_task_parent" value="parent&#xa;(0,1)" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;fontSize=9;strokeColor=#000000;fontFamily=Times New Roman" parent="1" source="e_tasks" target="r_subtask" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="920" y="870" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p1_e_task_child" value="child&#xa;(0,N)" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;fontSize=9;strokeColor=#000000;fontFamily=Times New Roman" parent="1" source="r_subtask" target="e_tasks" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="900" y="930" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="r_blocks" value="BLOCKS" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1045" y="1038" width="110" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e_blocks_from" value="from&#xa;(0,N)" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;fontSize=9;strokeColor=#000000;fontFamily=Times New Roman" parent="1" source="e_tasks" target="r_blocks" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="990" y="810" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p1_e_blocks_to" value="to&#xa;(0,N)" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;fontSize=9;strokeColor=#000000;fontFamily=Times New Roman" parent="1" source="r_blocks" target="e_tasks" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1050" y="810" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_tags_title" value="TAGS" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=11;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="230" y="865" width="200" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="e_tags" value="tag_id · workspace_id (FK) · name · color" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="230" y="887" width="200" height="53" as="geometry" />
+        </mxCell>
+        <mxCell id="r_owns" value="OWNS" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="660" y="1028" width="110" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e_ws_owns" value="(0,N)" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;fontSize=10;strokeColor=#000000;fontFamily=Times New Roman" parent="1" source="e_ws" target="r_owns" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="240" y="275" />
+              <mxPoint x="240" y="400" />
+              <mxPoint x="480" y="400" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p1_e_owns_tags" value="(1,1)" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;fontSize=10;strokeColor=#000000;fontFamily=Times New Roman;shape=link" parent="1" source="r_owns" target="e_tags" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r_tagged" value="TAGGED_AS" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="680" y="883" width="110" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e_tags_tagged" value="(0,N)" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;fontSize=10;strokeColor=#000000;fontFamily=Times New Roman" parent="1" source="e_tags" target="r_tagged" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e_tagged_task" value="(0,N)" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;fontSize=10;strokeColor=#000000;fontFamily=Times New Roman" parent="1" source="r_tagged" target="e_tasks" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="820" y="890" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_comments_outer" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=1" parent="1" vertex="1">
+          <mxGeometry x="1780" y="640" width="240" height="127" as="geometry" />
+        </mxCell>
+        <mxCell id="e_comments_title" value="COMMENTS" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=11;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1786" y="646" width="228" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="e_comments" value="task_id (FK, partial key) · comment_no (partial key) · parent_comment_id · author_user_id · body · created_at · edited_at" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1786" y="668" width="228" height="93" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_weak_lbl" value="weak entity" style="text;html=1;strokeColor=none;fillColor=none;fontSize=9;fontStyle=2;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1820" y="775" width="160" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="r_hc_outer" value="" style="rhombus;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=1" parent="1" vertex="1">
+          <mxGeometry x="1525" y="633" width="110" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="r_hc_inner" value="HAS_COMMENT" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1535" y="643" width="90" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_id_lbl" value="identifying" style="text;html=1;strokeColor=none;fillColor=none;fontSize=9;fontStyle=2;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1530" y="695" width="100" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e_task_hc" value="(0,N)" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;fontSize=10;strokeColor=#000000;fontFamily=Times New Roman" parent="1" source="e_tasks" target="r_hc_outer" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e_hc_comm" value="(1,1)" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;fontSize=10;strokeColor=#000000;fontFamily=Times New Roman;shape=link" parent="1" source="r_hc_outer" target="e_comments_outer" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r_authors" value="AUTHORS" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1845" y="853" width="110" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e_users_authors" value="(0,N)" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;fontSize=10;strokeColor=#000000;fontFamily=Times New Roman" parent="1" source="e_users" target="r_authors" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="190" y="820" />
+              <mxPoint x="1900" y="820" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p1_e_comm_authors" value="(1,1)" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;fontSize=10;strokeColor=#000000;fontFamily=Times New Roman;shape=link" parent="1" source="r_authors" target="e_comments_outer" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r_reply" value="REPLIES_TO" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="2250" y="680" width="110" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e_comm_parent" value="parent&#xa;(0,1)" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;fontSize=9;strokeColor=#000000;fontFamily=Times New Roman" parent="1" source="e_comments_outer" target="r_reply" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2060" y="675" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p1_e_comm_child" value="reply&#xa;(0,N)" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;fontSize=9;strokeColor=#000000;fontFamily=Times New Roman" parent="1" source="r_reply" target="e_comments_outer" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2060" y="730" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_att_title" value="ATTACHMENTS" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=11;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1570" y="985" width="230" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="e_att" value="attachment_id · task_id (FK) · uploaded_by · attachment_type · original_name · uploaded_at" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1570" y="1007" width="230" height="63" as="geometry" />
+        </mxCell>
+        <mxCell id="r_has_att" value="HAS_ATTACHMENT" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1240" y="1008" width="110" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e_task_hasatt" value="(0,N)" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;fontSize=10;strokeColor=#000000;fontFamily=Times New Roman" parent="1" source="e_tasks" target="r_has_att" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e_hasatt_att" value="(1,1)" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;fontSize=10;strokeColor=#000000;fontFamily=Times New Roman;shape=link" parent="1" source="r_has_att" target="e_att" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_activity_title" value="ACTIVITY_LOG" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=11;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="80" y="1100" width="220" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="e_activity" value="event_id · workspace_id (FK) · actor_user_id · entity_type · entity_id · action · payload_json · occurred_at" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="80" y="1122" width="220" height="88" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_poly_lbl" value="polymorphic association&#xa;(entity_type + entity_id — no FK,&#xa;discussed in Phase 4)" style="text;html=1;strokeColor=none;fillColor=none;fontSize=9;fontStyle=2;align=left;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="80" y="1215" width="220" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_footer" value="TaskNest · COM2058 Phase 2 — ER Schema&#xa;Author: Berk Kırık · Notation: Elmasri &amp; Navathe 6e (Ch07) · Date: 2026-04-19" style="text;html=1;strokeColor=#000000;fillColor=#ffffff;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontStyle=2;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="900" y="1490" width="700" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="r_subtask" target="r_subtask" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="3" value="" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;fontSize=10;strokeColor=#000000;fontFamily=Times New Roman;shape=link" parent="1" source="e_ws" target="e_ws_title" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="500" y="222" as="sourcePoint" />
+            <mxPoint x="1725" y="218" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" parent="1" source="e_ws_title" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="480.47619047619037" y="230" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_ws_title" value="WORKSPACES" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=11;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="380" y="195" width="200" height="22" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="2 · Relational Schema" id="tasknest-relational">
+    <mxGraphModel dx="532" dy="376" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2600" pageHeight="1200" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="p2_title" value="TaskNest — Relational Schema (Fig 9.1 style)&#xa;Notation: Elmasri &amp; Navathe 6e · Ch09" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="900" y="10" width="800" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_legend" value="NOTATION (Elmasri 6e Fig 9.1)&#xa;• Rectangle = Table (relation)&#xa;• Header bar = Table name&#xa;• Cell in row = Column (attribute + datatype)&#xa;• &lt;u&gt;Underlined&lt;/u&gt; column = Primary key&#xa;• (FK) = Foreign key&#xa;• Arrow → Referenced PK column&#xa;• Blue header = Strong entity&#xa;• Green header = Associative (M:N resolution)&#xa;• Orange header = Weak entity&#xa;• Yellow header = Audit/polymorphic" style="text;html=1;strokeColor=#000000;fillColor=#ffffff;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=9;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="40" y="30" width="320" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="p2h_workspaces" value="workspaces" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#000000;fontStyle=1;fontSize=11;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="380" y="80" width="440" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_workspaces_workspace_id" value="&lt;u&gt;workspace_id&lt;/u&gt;&#xa;BIGINT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="380" y="104" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_workspaces_slug" value="slug&#xa;VARCHAR(64)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="490" y="104" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_workspaces_name" value="name&#xa;VARCHAR(120)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="600" y="104" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_workspaces_created_at" value="created_at&#xa;TIMESTAMP" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="710" y="104" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2h_users" value="users" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#000000;fontStyle=1;fontSize=11;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1400" y="80" width="660" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_users_user_id" value="&lt;u&gt;user_id&lt;/u&gt;&#xa;BIGINT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1400" y="104" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_users_email" value="email&#xa;VARCHAR(255)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1510" y="104" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_users_password_hash" value="password_hash&#xa;VARCHAR(255)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1620" y="104" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_users_display_name" value="display_name&#xa;VARCHAR(120)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1730" y="104" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_users_kind" value="kind&#xa;VARCHAR(16)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1840" y="104" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_users_created_at" value="created_at&#xa;TIMESTAMP" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1950" y="104" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2h_ws_members" value="workspace_members" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#000000;fontStyle=1;fontSize=11;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="80" y="230" width="440" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_ws_members_workspace_id" value="&lt;u&gt;workspace_id (FK)&lt;/u&gt;&#xa;BIGINT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="80" y="254" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_ws_members_user_id" value="&lt;u&gt;user_id (FK)&lt;/u&gt;&#xa;BIGINT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="190" y="254" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_ws_members_role" value="role&#xa;VARCHAR(32)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="300" y="254" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_ws_members_joined_at" value="joined_at&#xa;TIMESTAMP" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="410" y="254" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2h_statuses" value="task_statuses" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#000000;fontStyle=1;fontSize=11;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="620" y="230" width="550" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_statuses_status_id" value="&lt;u&gt;status_id&lt;/u&gt;&#xa;BIGINT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="620" y="254" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_statuses_workspace_id" value="workspace_id (FK)&#xa;BIGINT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="730" y="254" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_statuses_name" value="name&#xa;VARCHAR(32)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="840" y="254" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_statuses_display_order" value="display_order&#xa;SMALLINT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="950" y="254" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_statuses_is_terminal" value="is_terminal&#xa;BOOLEAN" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1060" y="254" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2h_tags" value="tags" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#000000;fontStyle=1;fontSize=11;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1280" y="230" width="440" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_tags_tag_id" value="&lt;u&gt;tag_id&lt;/u&gt;&#xa;BIGINT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1280" y="254" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_tags_workspace_id" value="workspace_id (FK)&#xa;BIGINT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1390" y="254" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_tags_name" value="name&#xa;VARCHAR(40)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1500" y="254" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_tags_color" value="color&#xa;VARCHAR(7)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1610" y="254" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2h_projects" value="projects" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#000000;fontStyle=1;fontSize=11;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="80" y="360" width="770" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_projects_project_id" value="&lt;u&gt;project_id&lt;/u&gt;&#xa;BIGINT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="80" y="384" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_projects_workspace_id" value="workspace_id (FK)&#xa;BIGINT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="190" y="384" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_projects_slug" value="slug&#xa;VARCHAR(64)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="300" y="384" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_projects_name" value="name&#xa;VARCHAR(120)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="410" y="384" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_projects_created_by" value="created_by (FK)&#xa;BIGINT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="520" y="384" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_projects_created_at" value="created_at&#xa;TIMESTAMP" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="630" y="384" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_projects_archived_at" value="archived_at&#xa;TIMESTAMP" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="740" y="384" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2h_sprints" value="sprints" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#000000;fontStyle=1;fontSize=11;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="960" y="360" width="660" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_sprints_sprint_id" value="&lt;u&gt;sprint_id&lt;/u&gt;&#xa;BIGINT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="960" y="384" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_sprints_project_id" value="project_id (FK)&#xa;BIGINT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1070" y="384" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_sprints_name" value="name&#xa;VARCHAR(64)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1180" y="384" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_sprints_started_at" value="started_at&#xa;DATE" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1290" y="384" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_sprints_ended_at" value="ended_at&#xa;DATE" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1400" y="384" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_sprints_goal" value="goal&#xa;VARCHAR(255)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1510" y="384" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2h_pm" value="project_members" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#000000;fontStyle=1;fontSize=11;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="80" y="490" width="440" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_pm_workspace_id" value="&lt;u&gt;workspace_id (FK)&lt;/u&gt;&#xa;BIGINT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="80" y="514" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_pm_user_id" value="&lt;u&gt;user_id (FK)&lt;/u&gt;&#xa;BIGINT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="190" y="514" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_pm_project_id" value="&lt;u&gt;project_id (FK)&lt;/u&gt;&#xa;BIGINT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="300" y="514" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_pm_role" value="role&#xa;VARCHAR(32)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="410" y="514" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2h_ta" value="task_assignees" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#000000;fontStyle=1;fontSize=11;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="640" y="490" width="330" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_ta_task_id" value="&lt;u&gt;task_id (FK)&lt;/u&gt;&#xa;BIGINT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="640" y="514" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_ta_user_id" value="&lt;u&gt;user_id (FK)&lt;/u&gt;&#xa;BIGINT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="750" y="514" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_ta_role" value="&lt;u&gt;role&lt;/u&gt;&#xa;VARCHAR(32)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="860" y="514" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2h_td" value="task_dependencies" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#000000;fontStyle=1;fontSize=11;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1080" y="490" width="220" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_td_from_task_id" value="&lt;u&gt;from_task_id (FK)&lt;/u&gt;&#xa;BIGINT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1080" y="514" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_td_to_task_id" value="&lt;u&gt;to_task_id (FK)&lt;/u&gt;&#xa;BIGINT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1190" y="514" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2h_tt" value="task_tags" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#000000;fontStyle=1;fontSize=11;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1410" y="490" width="220" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_tt_task_id" value="&lt;u&gt;task_id (FK)&lt;/u&gt;&#xa;BIGINT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1410" y="514" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_tt_tag_id" value="&lt;u&gt;tag_id (FK)&lt;/u&gt;&#xa;BIGINT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1520" y="514" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2h_tasks" value="tasks" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#000000;fontStyle=1;fontSize=11;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="80" y="620" width="1540" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_tasks_task_id" value="&lt;u&gt;task_id&lt;/u&gt;&#xa;BIGINT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="80" y="644" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_tasks_workspace_id" value="workspace_id (FK)&#xa;BIGINT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="190" y="644" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_tasks_project_id" value="project_id (FK)&#xa;BIGINT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="300" y="644" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_tasks_sprint_id" value="sprint_id (FK,null)&#xa;BIGINT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="410" y="644" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_tasks_parent_task_id" value="parent_task_id (FK,null)&#xa;BIGINT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="520" y="644" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_tasks_status_id" value="status_id (FK)&#xa;BIGINT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="630" y="644" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_tasks_title" value="title&#xa;VARCHAR(255)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="740" y="644" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_tasks_description" value="description&#xa;TEXT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="850" y="644" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_tasks_priority" value="priority&#xa;SMALLINT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="960" y="644" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_tasks_created_by" value="created_by (FK)&#xa;BIGINT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1070" y="644" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_tasks_due_date" value="due_date&#xa;DATE" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1180" y="644" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_tasks_completed_at" value="completed_at&#xa;TIMESTAMP" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1290" y="644" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_tasks_created_at" value="created_at&#xa;TIMESTAMP" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1400" y="644" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_tasks_updated_at" value="updated_at&#xa;TIMESTAMP" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1510" y="644" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2h_comments" value="comments (weak)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#000000;fontStyle=1;fontSize=11;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="80" y="760" width="770" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_comments_task_id" value="&lt;u&gt;task_id (FK)&lt;/u&gt;&#xa;BIGINT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="80" y="784" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_comments_comment_no" value="&lt;u&gt;comment_no&lt;/u&gt;&#xa;INT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="190" y="784" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_comments_parent_comment_id" value="parent_comment_id (FK,null)&#xa;BIGINT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="300" y="784" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_comments_author_user_id" value="author_user_id (FK)&#xa;BIGINT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="410" y="784" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_comments_body" value="body&#xa;TEXT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="520" y="784" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_comments_created_at" value="created_at&#xa;TIMESTAMP" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="630" y="784" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_comments_edited_at" value="edited_at&#xa;TIMESTAMP" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="740" y="784" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2h_att" value="attachments" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#000000;fontStyle=1;fontSize=11;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="980" y="760" width="660" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_att_attachment_id" value="&lt;u&gt;attachment_id&lt;/u&gt;&#xa;BIGINT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="980" y="784" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_att_task_id" value="task_id (FK)&#xa;BIGINT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1090" y="784" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_att_uploaded_by" value="uploaded_by (FK)&#xa;BIGINT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1200" y="784" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_att_attachment_type" value="attachment_type&#xa;VARCHAR(16)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1310" y="784" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_att_original_name" value="original_name&#xa;VARCHAR(255)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1420" y="784" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_att_uploaded_at" value="uploaded_at&#xa;TIMESTAMP" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="1530" y="784" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2h_al" value="activity_log" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#000000;fontStyle=1;fontSize=11;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="80" y="900" width="880" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_al_event_id" value="&lt;u&gt;event_id&lt;/u&gt;&#xa;BIGINT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="80" y="924" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_al_workspace_id" value="workspace_id (FK)&#xa;BIGINT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="190" y="924" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_al_actor_user_id" value="actor_user_id (FK,null)&#xa;BIGINT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="300" y="924" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_al_entity_type" value="entity_type&#xa;VARCHAR(32)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="410" y="924" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_al_entity_id" value="entity_id&#xa;BIGINT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="520" y="924" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_al_action" value="action&#xa;VARCHAR(32)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="630" y="924" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_al_payload_json" value="payload_json&#xa;JSON" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="740" y="924" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c_al_occurred_at" value="occurred_at&#xa;TIMESTAMP" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=middle;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="850" y="924" width="110" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="p2fk_1" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;rounded=0;strokeColor=#1976D2;strokeWidth=1.3;endSize=6;exitX=0.5;exitY=0;entryX=0.08;entryY=1;jettySize=auto;orthogonalLoop=1" parent="1" source="p2c_ws_members_workspace_id" target="p2c_workspaces_workspace_id" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2fk_2" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;rounded=0;strokeColor=#D32F2F;strokeWidth=1.3;endSize=6;exitX=0.5;exitY=0;entryX=0.08;entryY=1;jettySize=auto;orthogonalLoop=1" parent="1" source="p2c_ws_members_user_id" target="p2c_users_user_id" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2fk_3" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;rounded=0;strokeColor=#1976D2;strokeWidth=1.3;endSize=6;exitX=0.5;exitY=0;entryX=0.58;entryY=1;jettySize=auto;orthogonalLoop=1" parent="1" source="p2c_statuses_workspace_id" target="p2c_workspaces_workspace_id" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2fk_4" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;rounded=0;strokeColor=#1976D2;strokeWidth=1.3;endSize=6;exitX=0.5;exitY=0;entryX=0.72;entryY=1;jettySize=auto;orthogonalLoop=1" parent="1" source="p2c_tags_workspace_id" target="p2c_workspaces_workspace_id" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2fk_5" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;rounded=0;strokeColor=#1976D2;strokeWidth=1.3;endSize=6;exitX=0.5;exitY=0;entryX=0.22;entryY=1;jettySize=auto;orthogonalLoop=1" parent="1" source="p2c_projects_workspace_id" target="p2c_workspaces_workspace_id" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="245" y="335" />
+              <mxPoint x="415" y="335" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p2fk_6" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;rounded=0;strokeColor=#D32F2F;strokeWidth=1.3;endSize=6;exitX=0.5;exitY=0;entryX=0.19;entryY=1;jettySize=auto;orthogonalLoop=1" parent="1" source="p2c_projects_created_by" target="p2c_users_user_id" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="575" y="335" />
+              <mxPoint x="1421" y="335" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p2fk_7" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;rounded=0;strokeColor=#7B1FA2;strokeWidth=1.3;endSize=6;exitX=0.5;exitY=0;entryX=0.5;entryY=0;jettySize=auto;orthogonalLoop=1" parent="1" source="p2c_sprints_project_id" target="p2c_projects_project_id" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1125" y="340" />
+              <mxPoint x="135" y="340" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p2fk_8" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;rounded=0;strokeColor=#1976D2;strokeWidth=1.3;endSize=6;exitX=0;exitY=0.5;entryX=0.34;entryY=1;jettySize=auto;orthogonalLoop=1" parent="1" source="p2c_pm_workspace_id" target="p2c_workspaces_workspace_id" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="30" y="536" />
+              <mxPoint x="30" y="197" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p2fk_9" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;rounded=0;strokeColor=#D32F2F;strokeWidth=1.3;endSize=6;exitX=0.5;exitY=0;entryX=0.3;entryY=1;jettySize=auto;orthogonalLoop=1" parent="1" source="p2c_pm_user_id" target="p2c_users_user_id" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="245" y="460" />
+              <mxPoint x="2180" y="460" />
+              <mxPoint x="2180" y="200" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p2fk_10" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;rounded=0;strokeColor=#7B1FA2;strokeWidth=1.3;endSize=6;exitX=0.5;exitY=0;entryX=0.33;entryY=1;jettySize=auto;orthogonalLoop=1" parent="1" source="p2c_pm_project_id" target="p2c_projects_project_id" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="355" y="462" />
+              <mxPoint x="116" y="462" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p2fk_11" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;rounded=0;strokeColor=#388E3C;strokeWidth=1.3;endSize=6;exitX=0.5;exitY=1;entryX=0.15;entryY=0;jettySize=auto;orthogonalLoop=1" parent="1" source="p2c_ta_task_id" target="p2c_tasks_task_id" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="695" y="600" />
+              <mxPoint x="97" y="600" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p2fk_12" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;rounded=0;strokeColor=#D32F2F;strokeWidth=1.3;endSize=6;exitX=0.5;exitY=0;entryX=0.41;entryY=1;jettySize=auto;orthogonalLoop=1" parent="1" source="p2c_ta_user_id" target="p2c_users_user_id" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="805" y="462" />
+              <mxPoint x="2180" y="462" />
+              <mxPoint x="2180" y="205" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p2fk_13" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;rounded=0;strokeColor=#388E3C;strokeWidth=1.3;endSize=6;exitX=0.5;exitY=1;entryX=0.35;entryY=0;jettySize=auto;orthogonalLoop=1" parent="1" source="p2c_td_from_task_id" target="p2c_tasks_task_id" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1135" y="595" />
+              <mxPoint x="118" y="595" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p2fk_14" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;rounded=0;strokeColor=#388E3C;strokeWidth=1.3;endSize=6;exitX=0.5;exitY=1;entryX=0.55;entryY=0;jettySize=auto;orthogonalLoop=1" parent="1" source="p2c_td_to_task_id" target="p2c_tasks_task_id" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1245" y="600" />
+              <mxPoint x="140" y="600" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p2fk_15" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;rounded=0;strokeColor=#388E3C;strokeWidth=1.3;endSize=6;exitX=0.5;exitY=1;entryX=0.8;entryY=0;jettySize=auto;orthogonalLoop=1" parent="1" source="p2c_tt_task_id" target="p2c_tasks_task_id" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1465" y="605" />
+              <mxPoint x="168" y="605" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p2fk_16" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;rounded=0;strokeColor=#F57C00;strokeWidth=1.3;endSize=6;exitX=0.5;exitY=0;entryX=0.5;entryY=1;jettySize=auto;orthogonalLoop=1" parent="1" source="p2c_tt_tag_id" target="p2c_tags_tag_id" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1575" y="462" />
+              <mxPoint x="1335" y="462" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p2fk_17" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;rounded=0;strokeColor=#1976D2;strokeWidth=1.3;endSize=6;exitX=0;exitY=0.5;entryX=0.46;entryY=1;jettySize=auto;orthogonalLoop=1" parent="1" source="p2c_tasks_workspace_id" target="p2c_workspaces_workspace_id" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="40" y="666" />
+              <mxPoint x="40" y="190" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p2fk_18" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;rounded=0;strokeColor=#7B1FA2;strokeWidth=1.3;endSize=6;exitX=0;exitY=0.5;entryX=0.66;entryY=1;jettySize=auto;orthogonalLoop=1" parent="1" source="p2c_tasks_project_id" target="p2c_projects_project_id" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="50" y="666" />
+              <mxPoint x="50" y="462" />
+              <mxPoint x="153" y="462" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p2fk_19" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;rounded=0;strokeColor=#F57C00;strokeWidth=1.3;endSize=6;exitX=0.5;exitY=0;entryX=0.5;entryY=1;jettySize=auto;orthogonalLoop=1" parent="1" source="p2c_tasks_sprint_id" target="p2c_sprints_sprint_id" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="465" y="600" />
+              <mxPoint x="905" y="600" />
+              <mxPoint x="905" y="462" />
+              <mxPoint x="1015" y="462" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p2fk_20" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;rounded=0;strokeColor=#616161;strokeWidth=1.3;endSize=6;exitX=0.5;exitY=0;entryX=0.5;entryY=0;jettySize=auto;orthogonalLoop=1" parent="1" source="p2c_tasks_parent_task_id" target="p2c_tasks_task_id" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="575" y="610" />
+              <mxPoint x="135" y="610" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p2fk_21" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;rounded=0;strokeColor=#F57C00;strokeWidth=1.3;endSize=6;exitX=0.5;exitY=0;entryX=0.5;entryY=1;jettySize=auto;orthogonalLoop=1" parent="1" source="p2c_tasks_status_id" target="p2c_statuses_status_id" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="685" y="600" />
+              <mxPoint x="675" y="340" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p2fk_22" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;rounded=0;strokeColor=#D32F2F;strokeWidth=1.3;endSize=6;exitX=0.5;exitY=0;entryX=0.52;entryY=1;jettySize=auto;orthogonalLoop=1" parent="1" source="p2c_tasks_created_by" target="p2c_users_user_id" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1125" y="605" />
+              <mxPoint x="2160" y="605" />
+              <mxPoint x="2160" y="210" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p2fk_23" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;rounded=0;strokeColor=#388E3C;strokeWidth=1.3;endSize=6;exitX=0.5;exitY=0;entryX=0.33;entryY=1;jettySize=auto;orthogonalLoop=1" parent="1" source="p2c_comments_task_id" target="p2c_tasks_task_id" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="135" y="725" />
+              <mxPoint x="116" y="725" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p2fk_24" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;rounded=0;strokeColor=#616161;strokeWidth=1.3;endSize=6;exitX=0.5;exitY=1;entryX=0.5;entryY=1;jettySize=auto;orthogonalLoop=1" parent="1" source="p2c_comments_parent_comment_id" target="p2c_comments_comment_no" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="355" y="855" />
+              <mxPoint x="245" y="855" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p2fk_25" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;rounded=0;strokeColor=#D32F2F;strokeWidth=1.3;endSize=6;exitX=0.5;exitY=0;entryX=0.63;entryY=1;jettySize=auto;orthogonalLoop=1" parent="1" source="p2c_comments_author_user_id" target="p2c_users_user_id" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="465" y="730" />
+              <mxPoint x="2140" y="730" />
+              <mxPoint x="2140" y="215" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p2fk_26" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;rounded=0;strokeColor=#388E3C;strokeWidth=1.3;endSize=6;exitX=0.5;exitY=0;entryX=0.66;entryY=1;jettySize=auto;orthogonalLoop=1" parent="1" source="p2c_att_task_id" target="p2c_tasks_task_id" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1145" y="735" />
+              <mxPoint x="153" y="735" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p2fk_27" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;rounded=0;strokeColor=#D32F2F;strokeWidth=1.3;endSize=6;exitX=0.5;exitY=0;entryX=0.76;entryY=1;jettySize=auto;orthogonalLoop=1" parent="1" source="p2c_att_uploaded_by" target="p2c_users_user_id" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1255" y="740" />
+              <mxPoint x="2100" y="740" />
+              <mxPoint x="2100" y="220" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p2fk_28" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;rounded=0;strokeColor=#1976D2;strokeWidth=1.3;endSize=6;exitX=0.5;exitY=0;entryX=0.88;entryY=1;jettySize=auto;orthogonalLoop=1" parent="1" source="p2c_al_workspace_id" target="p2c_workspaces_workspace_id" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="245" y="870" />
+              <mxPoint x="30" y="870" />
+              <mxPoint x="30" y="195" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p2fk_29" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;rounded=0;strokeColor=#D32F2F;strokeWidth=1.3;endSize=6;exitX=0.5;exitY=0;entryX=0.9;entryY=1;jettySize=auto;orthogonalLoop=1" parent="1" source="p2c_al_actor_user_id" target="p2c_users_user_id" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="355" y="880" />
+              <mxPoint x="2080" y="880" />
+              <mxPoint x="2080" y="225" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p2_footer" value="TaskNest · COM2058 Phase 2 — Relational Schema&#xa;Author: Berk Kırık · Notation: Elmasri &amp; Navathe 6e (Ch09, Fig 9.1) · Date: 2026-04-21" style="text;html=1;strokeColor=#000000;fillColor=#ffffff;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontStyle=2;fontFamily=Times New Roman" parent="1" vertex="1">
+          <mxGeometry x="900" y="1030" width="800" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="lmPyppBofG08-nN3z-jn-1" value="Text" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="260" y="500" width="60" height="30" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

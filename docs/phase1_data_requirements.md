@@ -1,320 +1,491 @@
 # COM2058 Project — Phase 1: Data Requirements
 
-**Project:** TaskNest — Multi-Tenant Project Management SaaS
+**Project:** StoreCraft — Multi-Tenant E-Commerce Platform SaaS
 **Course:** COM2058 Database Management Systems, Ankara University
 **Author:** Berk Kırık
-**Date:** 2026-04-19
-**Phase 1 Weight:** 10% — Due: 2026-04-26
+**Status:** WIP — built step by step with user confirmation
 
 ---
 
-## 1. System Purpose & Scope
+## 1. Overview
 
-TaskNest is a multi-tenant Software-as-a-Service (SaaS) platform that allows multiple organizations (workspaces) to independently manage their projects, tasks, and team collaboration on shared infrastructure with strict data isolation. Each workspace is a logical tenant: members of one workspace cannot see, query, or modify data belonging to another workspace, even though all data lives in a single MySQL database instance.
+StoreCraft is a multi-tenant SaaS platform (Shopify-clone) that lets independent merchants launch online stores. Each merchant (tenant) maintains its own catalog, customer base, orders, and inventory; data is isolated at the schema level. End-users (customers) are modeled globally via an EER specialization so one person can shop across many merchant stores with a single identity.
 
-The system supports the typical workflows of a small-to-medium engineering team:
-- Creating workspaces and inviting team members with different roles
-- Organizing work into projects, sprints (iterations), and tasks
-- Breaking tasks into subtasks and modeling task-to-task dependencies
-- Assigning multiple team members to a task with different responsibilities
-- Discussing work via threaded comments on tasks
-- Attaching files, images, and external links to tasks
-- Logging time spent on tasks for billing and reporting
-- Tagging tasks for cross-cutting categorization
-- Auditing every state-changing action via an immutable activity log
-- Mentioning users, tags, and projects from within comments
+### Scope (Phase 1/2, "Full Commerce")
+- ✓ Catalog (products, variants, categories)
+- ✓ Inventory (warehouse-level stock, ternary relationship)
+- ✓ Shopping (carts, orders, line items)
+- ✓ Payments + Shipments
+- ✓ Reviews + Discount codes
+- ✓ Audit log
+- ✗ Out of scope: multi-vendor marketplaces, customer wishlists, Q&A, abandoned-cart recovery, refund/return flows
 
-The scope is **deliberately limited** to functionality that exercises a wide range of relational database concepts (entities, relationships, weak entities, recursive relationships, ternary relationships, EER specialization/category/aggregation, normalization, transactions, concurrency) rather than competing with mature commercial offerings. Out-of-scope items are listed in §6.
+### Entity count
+**17 entity types** in the ER diagram (4 Identity + 4 Tenant/Catalog + 1 Warehouses + 5 Commerce + 3 Engagement). **INVENTORY** is modeled in Chen ER as a **ternary relationship** `STOCKED_AT(PRODUCTS × PRODUCT_VARIANTS × WAREHOUSES)` with attributes, not a standalone entity. During Phase 3 relational mapping, the ternary becomes its own bridge table — yielding 18 total tables. Additional bridge tables (`merchant_staff`, `product_categories`, `cart_items`, `discount_usages`) also emerge then.
 
 ---
 
-## 2. Actors
+## 2. Tenant & Identity Model
 
-| Actor | Description |
-|-------|-------------|
-| **Owner** | A workspace member with full control: can manage members, billing, projects, and delete the workspace. Exactly one Owner is required per workspace at all times (assertion). |
-| **Admin** | Can manage projects and members, but cannot delete the workspace or change billing. |
-| **Member** | Standard user — can be added to projects, create and update tasks, comment, and log time within projects they belong to. |
-| **Guest** | A limited external collaborator (e.g., a client) granted read-only access to specific projects. |
-| **Bot / Service Account** | A non-human account used for integrations (e.g., a CI bot that creates tasks from build failures). Authenticates with an API key rather than a password. |
-| **Internal User** | A subtype: a person directly employed by the workspace organization, with employee number and hire date. |
-| **External User** | A subtype: a freelancer or contractor with company name and hourly rate. |
+### Tenancy
+- **Tenant root:** `MERCHANTS` — each row = one store owner / shop
+- **Tenant-scoped:** every catalog/commerce/inventory/audit table carries `merchant_id`
+- **Tenant-free (global):** `USERS`, subclasses (CUSTOMER, STAFF, PLATFORM_ADMIN)
 
-A single user may simultaneously play multiple roles in different workspaces (e.g., Owner of "Acme Corp" and Member of "OpenStreet OSS"). Likewise, the **Internal User** and **Bot** subtypes can overlap (a single person may register a bot they own — overlapping specialization), and the **Guest** kind has no subclass row at all (partial participation in the specialization). These are formalized in §4.
+### EER specialization on USERS
+- **Subclasses:** CUSTOMER, STAFF, PLATFORM_ADMIN (3)
+- **Disjointness:** **Overlapping** — one user may be both a customer (shopping elsewhere) and staff (employed at their own store)
+- **Participation:** **Partial** — a freshly-registered user may belong to no subclass yet
+- Visual:
+  ```
+            USERS
+              │
+           ─◯o─        (overlapping, partial)
+           ╱ │ ╲
+     CUSTOMER STAFF PLATFORM_ADMIN
+  ```
 
----
-
-## 3. Functional Requirements
-
-### Account & Authentication
-- **FR-1** A user can register with email and password.
-- **FR-2** A user can log in via email and password and receive a session cookie.
-- **FR-3** A user can log out, invalidating the session.
-- **FR-4** Bot accounts authenticate via an API key (not password).
-
-### Workspace Management
-- **FR-5** Any registered user can create a new workspace; the creator becomes the Owner.
-- **FR-6** A workspace has a globally unique slug, a display name, and a structured address (street, city, country, postal code) — the address is a composite attribute.
-- **FR-7** An Owner or Admin can add or remove members and change member roles.
-- **FR-8** A workspace must have at least one Owner at all times (system-level assertion).
-
-### Project & Sprint Management
-- **FR-9** An Admin or Owner can create a project within a workspace.
-- **FR-10** A project's slug is unique within its workspace (composite uniqueness).
-- **FR-11** A project can be split into sprints with a start and end date. A task may optionally belong to a sprint.
-- **FR-12** Project members are drawn from workspace members — a non-member of a workspace cannot be added to its projects (referential constraint at the schema level).
-
-### Task Management
-- **FR-13** A task belongs to exactly one project (total participation).
-- **FR-14** A task can have a parent task, forming a subtask hierarchy (recursive relationship).
-- **FR-15** A task can declare zero or more "blocked-by" dependencies on other tasks within the same workspace (M:N recursive relationship; the resulting graph must be acyclic, enforced by application logic).
-- **FR-16** A task can have zero or more assignees (M:N with users).
-- **FR-17** A task can have zero or more tags (M:N; tag set is workspace-scoped).
-- **FR-18** A task has a status drawn from a workspace-configurable list (e.g., "Backlog", "In Progress", "Review", "Done"); the status set is per-workspace, not a fixed enum.
-
-### Comments
-- **FR-19** A user can write comments on a task. Comments are weak entities: they have no identity outside the parent task. A comment is identified by the (task_id, comment_no) pair, where comment_no is auto-incremented within the task.
-- **FR-20** A comment may have a parent comment (recursive self-FK), enabling threaded discussions.
-- **FR-21** A comment may mention zero or more users, tags, or projects (category / union type — see §4).
-
-### Attachments
-- **FR-22** A task can have zero or more attachments.
-- **FR-23** An attachment is one of three disjoint kinds: an Image (with width, height, MIME type), a File (with size, MIME type, storage path), or a Link (with URL and preview text). The kind is fixed at creation time and cannot change.
-- **FR-24** An Image attachment additionally inherits the File attributes (size, MIME, storage path) — i.e., every image is also a file (lattice / multiple-inheritance specialization).
-
-### Time Tracking
-- **FR-25** A user assigned to a task can log hours worked on that task on a given calendar date. The combination (user, task, date) is unique. The system must reject negative or above-24-hour entries (CHECK constraint).
-
-### Activity Log & Mentions
-- **FR-26** Every state-changing action (task created/updated, comment posted, status changed, assignment added/removed, etc.) is recorded in an immutable activity log with actor, timestamp, entity type, and entity id (polymorphic association).
-- **FR-27** A comment may mention any combination of users, tags, or projects. Each mention links the comment to exactly one of those three kinds (union/category type with discriminator + exactly-one-FK constraint).
-
-### Reporting & Analytics
-- **FR-28** The system provides aggregated views: project progress (% of tasks completed), per-user workload (active task count and hours logged this week), and overdue tasks per project.
-- **FR-29** The user can browse the activity log filtered by workspace, actor, or entity type.
+### Staff roles
+Stored as a plain string on the `merchant_staff` bridge (4 values): `owner`, `admin`, `staff`, `viewer`. RBAC/permission tables deferred to Phase 4+.
 
 ---
 
-## 4. Data Requirements — Entity Descriptions
-
-This section describes each entity, its attributes, and the business rules that constrain it. Cardinality and participation constraints are summarized in §5; the formal ER/EER diagram is delivered in Phase 2.
-
-### 4.1 `users` (with EER specialization)
-
-`users` is the **superclass** of an EER specialization on the discriminator attribute `kind ∈ {internal, external, bot, guest}`. The specialization is **predicate-defined**, **overlapping** (a user can simultaneously be `internal` and `bot`, e.g., an employee who registers a bot account), and **partial** (a `guest` user has no subclass row).
-
-**Superclass attributes:** `user_id` (PK), `email` (UNIQUE), `password_hash` (NULL for bots), `display_name`, `kind`, `created_at`.
-
-**Subclass `internal_users`:** `user_id` (PK, FK to users), `employee_no`, `hired_at`, `manager_user_id` (nullable self-FK — recursive relationship within internal employees).
-
-**Subclass `external_users`:** `user_id` (PK, FK to users), `company_name`, `hourly_rate`, `currency`.
-
-**Subclass `bot_users`:** `user_id` (PK, FK to users), `api_key_hash`, `owner_user_id` (FK to users — a person who owns the bot).
-
-**Business rules:**
-- A user with `kind='guest'` has no row in any of the three subclass tables.
-- A user with `kind='internal'` has exactly one row in `internal_users`.
-- A bot's owner must be a non-bot user.
-
-### 4.2 `workspaces`
-
-A workspace represents a tenant organization. Has a **composite attribute** `address(street, city, country, postal_code)` modeled as separate columns on the same table.
-
-**Attributes:** `workspace_id` (PK), `slug` (UNIQUE, URL-safe), `name`, `address_street`, `address_city`, `address_country`, `address_postal_code`, `created_at`.
-
-**Business rules:**
-- Slug must be 3-32 characters, lowercase alphanumerics and hyphens only (CHECK constraint).
-- Every workspace must have ≥ 1 Owner (asserted via application logic; in MySQL, CREATE ASSERTION is unsupported and discussed in the Phase 4 report).
-
-### 4.3 `workspace_members` (associative)
-
-Resolves the M:N relationship between users and workspaces. The role attribute on the relationship is modeled as a column.
-
-**Attributes:** `wm_id` (surrogate PK), `workspace_id` (FK), `user_id` (FK), `role` ∈ {owner, admin, member, guest}, `joined_at`. UNIQUE constraint on `(workspace_id, user_id)`.
-
-**Business rules:**
-- A user can be a member of multiple workspaces but only once per workspace.
-- The `wm_id` surrogate is used as the FK target by `project_members` to enforce that project membership requires workspace membership.
-
-### 4.4 `projects`
-
-**Attributes:** `project_id` (PK), `workspace_id` (FK), `slug`, `name`, `description`, `created_by` (FK to users), `created_at`, `archived_at` (nullable). UNIQUE on `(workspace_id, slug)` and additionally on `(workspace_id, project_id)` — the latter is required for the composite FK from `tasks` (see §4.8 and the Multi-Tenant Denormalization note in the project plan).
-
-**Business rules:**
-- Slug uniqueness is per-workspace, not global.
-
-### 4.5 `project_members` (associative)
-
-Resolves M:N between projects and workspace members.
-
-**Attributes:** `pm_id` (PK), `project_id` (FK), `wm_id` (FK to `workspace_members`, **not directly to users**), `role` ∈ {lead, contributor, reviewer}, `added_at`. UNIQUE on `(project_id, wm_id)`.
-
-**Business rule:** Because the FK targets `workspace_members.wm_id`, the schema enforces that a user can only join a project of a workspace they are already a member of.
-
-### 4.6 `task_statuses`
-
-**Attributes:** `status_id` (PK), `workspace_id` (FK), `name`, `display_order`, `is_terminal` (BOOL — e.g., "Done" is terminal). UNIQUE on `(workspace_id, name)`.
-
-**Business rule:** Each workspace defines its own status workflow. Default seed: "Backlog", "In Progress", "Review", "Done".
-
-### 4.7 `sprints`
-
-**Attributes:** `sprint_id` (PK), `project_id` (FK), `name`, `started_at` (DATE), `ended_at` (DATE), `goal` (TEXT). CHECK `started_at <= ended_at`.
-
-**Business rule:** Sprints belong to a project (1:N). A task may belong to at most one sprint (nullable FK on tasks).
-
-### 4.8 `tasks`
-
-The central operational entity. Combines several constructs at once: recursive parent-child (subtasks), composite FK to projects (for tenant-safe denormalization), and several M:N participations (assignees, tags, dependencies).
-
-**Attributes:** `task_id` (PK), `workspace_id` (NOT NULL — denormalized for tenant filtering), `project_id` (NOT NULL), `sprint_id` (nullable FK), `parent_task_id` (nullable self-FK — recursive), `status_id` (FK to `task_statuses`), `title`, `description`, `priority` ∈ {low, normal, high, urgent}, `created_by` (FK), `assigned_at` (nullable), `due_date` (nullable), `completed_at` (nullable), `created_at`, `updated_at`.
-
-**Composite FK:** `(workspace_id, project_id)` REFERENCES `projects(workspace_id, project_id)` — guarantees that `task.workspace_id` always matches its project's workspace; eliminates an entire class of multi-tenant data integrity bugs.
-
-**Business rules:**
-- A task's status must belong to the same workspace (cross-table tenant check, enforced via composite FK on status).
-- A task's parent task must be in the same project.
-- `completed_at IS NOT NULL` ⇔ status is terminal (application invariant).
-
-### 4.9 `task_dependencies`
-
-Recursive M:N: a task can be blocked by zero or more other tasks; a task can block zero or more other tasks.
-
-**Attributes:** `from_task_id` (FK to tasks), `to_task_id` (FK to tasks), `created_at`. PK `(from_task_id, to_task_id)`. CHECK `from_task_id <> to_task_id`.
-
-**Business rule:** The dependency graph must be acyclic (enforced in application — Phase 4 discusses why this is hard to enforce in pure SQL).
-
-### 4.10 `task_assignees`
-
-M:N between tasks and users. The fact that a user is assigned is what's modeled; the role of the assignee on the task is captured by the `role` column.
-
-**Attributes:** `task_id` (FK), `user_id` (FK), `role` ∈ {implementer, reviewer, tester}, `assigned_at`. PK `(task_id, user_id, role)`.
-
-**Business rules:**
-- The same user may be assigned to the same task in multiple roles (e.g., implementer and reviewer simultaneously).
-- The user must be a member of the project (application-enforced).
-
-### 4.11 `tags` and `task_tags`
-
-`tags` are workspace-scoped labels.
-**`tags` attributes:** `tag_id` (PK), `workspace_id` (FK), `name`, `color`. UNIQUE `(workspace_id, name)`.
-
-`task_tags` is the resolution of the M:N relationship.
-**`task_tags` attributes:** `task_id` (FK), `tag_id` (FK). PK `(task_id, tag_id)`.
-
-The pair `(task_assignees, task_tags)` is a deliberate **4NF demonstration**: assignees and tags are independent multivalued facts about a task, so they MUST live in separate tables (combining them would create a multivalued dependency violation).
-
-### 4.12 `comments` (weak entity, recursive)
-
-Comments are a **weak entity** owned by tasks. A comment has no identity outside the parent task.
-
-**Attributes:** `task_id` (FK, partial of PK), `comment_no` (partial key, auto-numbered within task), `parent_comment_id` (nullable, recursive self-FK for threading), `author_user_id` (FK to users, NOT NULL), `body` (TEXT), `created_at`, `edited_at`. **PK `(task_id, comment_no)`.**
-
-The relationship between `tasks` and `comments` is an **identifying relationship** (double diamond in ER notation, double rectangle for the weak entity).
-
-**Business rule:** `comment_no` is assigned by a trigger that reads `MAX(comment_no) + 1` within the parent task with `FOR UPDATE` locking to prevent concurrent duplicate-key races.
-
-### 4.13 `attachments` (EER specialization superclass + lattice)
-
-The `attachments` table is the superclass of a **disjoint, total** specialization on `attachment_type ∈ {image, file, link}`.
-
-**Superclass attributes:** `attachment_id` (PK), `task_id` (FK), `uploaded_by` (FK to users), `attachment_type` (discriminator), `original_name`, `uploaded_at`. UNIQUE `(attachment_id, attachment_type)` to enable the disjointness-enforcing composite FK on subclasses.
-
-**Subclass `attachment_file`:** `attachment_id` (PK), `attachment_type` (CHECK = 'file' OR 'image'), `file_size`, `mime_type`, `storage_path`. Composite FK `(attachment_id, attachment_type)` REFERENCES `attachments`.
-
-**Subclass `attachment_image`:** `attachment_id` (PK), `attachment_type` (CHECK = 'image'), `width`, `height`. Composite FK `(attachment_id, attachment_type)` REFERENCES `attachment_file` — every image is also a file. **This is a 2-level lattice / multiple-inheritance specialization** (image inherits from both `attachment_file` and `attachments` transitively).
-
-**Subclass `attachment_link`:** `attachment_id` (PK), `attachment_type` (CHECK = 'link'), `url`, `preview_text`. Composite FK to `attachments`.
-
-**Business rules:**
-- Disjointness is enforced at the database level via the composite-FK trick: a row in `attachment_image` cannot be re-pointed to a `link` superclass row because the `attachment_type` column is constrained.
-- Total participation: every superclass row must have a corresponding subclass row of the matching type (enforced by application logic / trigger; explicitly discussed in the Phase 4 report).
-
-### 4.14 `time_logs` (ternary relationship)
-
-Models the ternary relationship "user logs N hours on task T on date D".
-
-**Attributes:** `user_id` (FK), `task_id` (FK), `log_date` (DATE), `hours_logged` (DECIMAL(4,2)), `note` (nullable). PK `(user_id, task_id, log_date)`. CHECK `hours_logged > 0 AND hours_logged <= 24` and `log_date <= CURRENT_DATE`.
-
-**Business rule:** A user can only log time on a task they are currently assigned to — see §7 for the alternative aggregation modeling discussion.
-
-### 4.15 `mentions` (EER category / union type)
-
-A mention links a comment to **exactly one** of three different entity types: a user, a tag, or a project. Because users, tags, and projects have **different keys** and are not naturally subsumed by a common superclass, this is modeled as an **EER category** (union type).
-
-**Attributes:** `mention_id` (PK), `comment_task_id` + `comment_no` (composite FK to comments), `target_type` ∈ {user, tag, project}, `target_user_id` (nullable FK), `target_tag_id` (nullable FK), `target_project_id` (nullable FK).
-
-**Business rule (CHECK constraint):** Exactly one of `target_user_id`, `target_tag_id`, `target_project_id` is non-NULL, matching the value of `target_type`.
-
-### 4.16 `activity_log` (polymorphic audit)
-
-Append-only audit log capturing every state-changing event. Uses a polymorphic association — `entity_type` + `entity_id` together identify the affected entity.
-
-**Attributes:** `event_id` (PK, auto-increment), `workspace_id` (FK — for tenant filtering), `actor_user_id` (FK), `entity_type` ∈ {task, comment, project, member, status}, `entity_id` (BIGINT — no FK because it points to different tables depending on entity_type), `action` ∈ {created, updated, deleted, status_changed, assigned, unassigned, commented}, `payload_json` (JSON — the diff or relevant context), `occurred_at` (DATETIME).
-
-**Business rule:** Rows in `activity_log` are inserted automatically by triggers on the source tables and never updated or deleted by application logic. The polymorphic association is a deliberate denormalization that trades referential integrity for append-only audit simplicity — this trade-off is explicitly analyzed in the Phase 4 report (Ch15 normalization discussion).
+## 3. Entity Attribute Dictionary
+
+### Group 1 — Identity (4 entities)
+
+#### 3.1 USERS (superclass)
+Shared attributes every authenticated person carries.
+
+| Attribute | Type | Key / Null | Notes |
+|---|---|---|---|
+| `user_id` | BIGINT | **PK** | Surrogate, auto-increment |
+| `email` | VARCHAR(255) | UNIQUE, NOT NULL | Login credential |
+| `password_hash` | VARCHAR(255) | NOT NULL | Argon2id or bcrypt |
+| `first_name` | VARCHAR(80) | NOT NULL | |
+| `last_name` | VARCHAR(80) | NOT NULL | |
+| `phone` | VARCHAR(20) | NULL | E.164 format |
+| `email_verified_at` | TIMESTAMP | NULL | Non-null = verified |
+| `is_active` | BOOLEAN | NOT NULL, default TRUE | Soft-disable flag |
+| `last_login_at` | TIMESTAMP | NULL | |
+| `created_at` | TIMESTAMP | NOT NULL | |
+| `updated_at` | TIMESTAMP | NOT NULL | |
+
+#### 3.2 CUSTOMER (subclass)
+Specialization of USERS — users who shop on any merchant's store.
+
+| Attribute | Type | Key / Null | Notes |
+|---|---|---|---|
+| `user_id` | BIGINT | **PK, FK → USERS** | ISA inheritance |
+| `default_shipping_address` | **COMPOSITE** | NULL | `{street, city, state, postal_code, country}` — Chen ER composite attribute |
+| `date_of_birth` | DATE | NULL | |
+| `loyalty_points` | INT | NOT NULL, default 0 | Across all merchants (global balance) |
+| `accepts_marketing` | BOOLEAN | NOT NULL, default FALSE | Global opt-in |
+| `referral_code` | VARCHAR(20) | UNIQUE, NULL | |
+
+#### 3.3 STAFF (subclass)
+Specialization of USERS — users employed at one or more merchants.
+
+| Attribute | Type | Key / Null | Notes |
+|---|---|---|---|
+| `user_id` | BIGINT | **PK, FK → USERS** | ISA inheritance |
+| `employment_type` | VARCHAR(20) | NOT NULL | `full_time` / `part_time` / `contractor` |
+| `hired_at` | TIMESTAMP | NOT NULL | First-employment date across StoreCraft |
+| `title` | VARCHAR(80) | NOT NULL | e.g. "Store Manager", "Sales Assistant" |
+| `commission_rate` | DECIMAL(5,2) | NULL | % of sales; null if salaried |
+| `employment_status` | VARCHAR(20) | NOT NULL | `active` / `on_leave` / `terminated` |
+
+#### 3.4 PLATFORM_ADMIN (subclass)
+Specialization of USERS — StoreCraft platform employees (our own team).
+
+| Attribute | Type | Key / Null | Notes |
+|---|---|---|---|
+| `user_id` | BIGINT | **PK, FK → USERS** | ISA inheritance |
+| `admin_level` | VARCHAR(20) | NOT NULL | `super_admin` / `support` / `engineer` / `billing` |
+| `department` | VARCHAR(50) | NOT NULL | e.g. "Customer Success", "Trust & Safety" |
+| `hired_at` | TIMESTAMP | NOT NULL | |
+
+### Group 2 — Tenant + Catalog (4 entities)
+
+#### 3.5 MERCHANTS (tenant root)
+One row = one store = one tenant. All catalog/commerce data below carries `merchant_id`.
+
+| Attribute | Type | Key / Null | Notes |
+|---|---|---|---|
+| `merchant_id` | BIGINT | **PK** | Tenant identifier |
+| `slug` | VARCHAR(64) | UNIQUE, NOT NULL | URL slug (`storecraft.com/{slug}`) |
+| `store_name` | VARCHAR(120) | NOT NULL | Public display name |
+| `owner_user_id` | BIGINT | FK → STAFF, NOT NULL | Founding staff (owner) |
+| `business_address` | **COMPOSITE** | NOT NULL | `{street, city, state, postal_code, country}` — Chen ER composite attribute |
+| `contact_email` | VARCHAR(255) | NOT NULL | Support email |
+| `currency` | CHAR(3) | NOT NULL | ISO 4217 (USD, TRY, EUR) |
+| `plan` | VARCHAR(20) | NOT NULL | `starter` / `growth` / `enterprise` |
+| `created_at` | TIMESTAMP | NOT NULL | |
+| `activated_at` | TIMESTAMP | NULL | When plan payment confirmed |
+| `suspended_at` | TIMESTAMP | NULL | Non-null = suspended |
+
+#### 3.6 PRODUCTS (catalog base — triggers specialization in Phase 2)
+
+| Attribute | Type | Key / Null | Notes |
+|---|---|---|---|
+| `product_id` | BIGINT | **PK** | |
+| `merchant_id` | BIGINT | FK → MERCHANTS, NOT NULL | Tenant anchor |
+| `slug` | VARCHAR(120) | NOT NULL | UNIQUE `(merchant_id, slug)` |
+| `title` | VARCHAR(255) | NOT NULL | |
+| `description` | TEXT | NULL | |
+| `product_type` | VARCHAR(20) | NOT NULL | **Discriminator** for specialization: `physical` / `digital` / `subscription` |
+| `base_price` | DECIMAL(12,2) | NOT NULL | Variants may override |
+| `currency` | CHAR(3) | NOT NULL | |
+| `status` | VARCHAR(20) | NOT NULL | `draft` / `active` / `archived` |
+| `created_at` | TIMESTAMP | NOT NULL | |
+| `updated_at` | TIMESTAMP | NOT NULL | |
+
+**Phase 2 specialization preview:** `PRODUCTS → {PHYSICAL_PRODUCT, DIGITAL_PRODUCT, SUBSCRIPTION_PRODUCT}` with attribute-defined (disjoint, total) subclassing on `product_type`. Subclass-only attributes:
+- `PHYSICAL_PRODUCT`: `weight_grams`, `length_cm`, `width_cm`, `height_cm`, `requires_shipping`
+- `DIGITAL_PRODUCT`: `file_url`, `download_limit`, `file_size_bytes`
+- `SUBSCRIPTION_PRODUCT`: `billing_period`, `trial_days`, `renewal_count_limit`
+
+#### 3.7 PRODUCT_VARIANTS (weak entity)
+No standalone identity — a variant only exists under a product.
+
+| Attribute | Type | Key / Null | Notes |
+|---|---|---|---|
+| `product_id` | BIGINT | **PK (part), FK → PRODUCTS** | Identifying relationship |
+| `variant_no` | INT | **PK (part)** | **Partial key** — sequenced within a product |
+| `sku` | VARCHAR(40) | UNIQUE `(merchant_id, sku)`, NOT NULL | Stock-keeping unit |
+| `option1_name` | VARCHAR(40) | NULL | e.g. "Color" |
+| `option1_value` | VARCHAR(40) | NULL | e.g. "Red" |
+| `option2_name` | VARCHAR(40) | NULL | e.g. "Size" |
+| `option2_value` | VARCHAR(40) | NULL | e.g. "L" |
+| `price_override` | DECIMAL(12,2) | NULL | NULL = use product.base_price |
+| `barcode` | VARCHAR(64) | NULL | EAN / UPC |
+| `is_default` | BOOLEAN | NOT NULL, default FALSE | Default variant flag |
+
+**Weak entity semantics:** Compound PK `(product_id, variant_no)`; double-rectangle in Chen ER.
+
+#### 3.8 CATEGORIES (recursive hierarchy)
+
+| Attribute | Type | Key / Null | Notes |
+|---|---|---|---|
+| `category_id` | BIGINT | **PK** | |
+| `merchant_id` | BIGINT | FK → MERCHANTS, NOT NULL | Tenant anchor |
+| `parent_category_id` | BIGINT | FK → CATEGORIES, NULL | **Recursive self-FK** |
+| `slug` | VARCHAR(80) | NOT NULL | UNIQUE `(merchant_id, slug)` |
+| `name` | VARCHAR(120) | NOT NULL | |
+| `display_order` | SMALLINT | NOT NULL, default 0 | Sibling ordering |
+| `created_at` | TIMESTAMP | NOT NULL | |
+
+**Recursive relationship:** `parent_category_id → category_id` creates a tree (e.g., Electronics → Phones → Smartphones).
+
+### Group 3 — Inventory (2 entities + ternary relationship)
+
+#### 3.9 WAREHOUSES
+Physical storage locations. Each warehouse belongs to one merchant.
+
+| Attribute | Type | Key / Null | Notes |
+|---|---|---|---|
+| `warehouse_id` | BIGINT | **PK** | |
+| `merchant_id` | BIGINT | FK → MERCHANTS, NOT NULL | Tenant anchor |
+| `name` | VARCHAR(80) | NOT NULL | e.g., "Ankara Main Warehouse" |
+| `address` | **COMPOSITE** | NOT NULL | `{street, city, state, postal_code, country}` |
+| `is_active` | BOOLEAN | NOT NULL, default TRUE | Operational flag |
+| `created_at` | TIMESTAMP | NOT NULL | |
+
+#### 3.10 INVENTORY (ternary relationship: PRODUCT × VARIANT × WAREHOUSE)
+Genuine ternary — quantity is defined only by the triple of (product, variant, warehouse). Binary decomposition loses information.
+
+| Attribute | Type | Key / Null | Notes |
+|---|---|---|---|
+| `product_id` | BIGINT | **PK (part), FK → PRODUCTS** | Ternary participant 1 |
+| `variant_no` | INT | **PK (part), FK → PRODUCT_VARIANTS** (composite) | Ternary participant 2 |
+| `warehouse_id` | BIGINT | **PK (part), FK → WAREHOUSES** | Ternary participant 3 |
+| `merchant_id` | BIGINT | FK → MERCHANTS, NOT NULL | Tenant anchor (composite-FK enforcement) |
+| `quantity_on_hand` | INT | NOT NULL, default 0 | Physical stock |
+| `quantity_reserved` | INT | NOT NULL, default 0 | Reserved by carts/orders |
+| `quantity_available` | INT | **DERIVED** | `= on_hand − reserved` (Chen ER derived attribute, dashed ellipse) |
+| `reorder_level` | INT | NULL | Low-stock threshold |
+| `last_restocked_at` | TIMESTAMP | NULL | |
+| `updated_at` | TIMESTAMP | NOT NULL | |
+
+**Compound PK:** `(product_id, variant_no, warehouse_id)`.
+
+**Ternary in Chen ER (Fig 7.17 style):**
+```
+    PRODUCTS           VARIANTS            WAREHOUSES
+        \                  |                  /
+         \                 |                 /
+          \________◇ STOCKED_AT ◇___________/
+                  {qty_on_hand, qty_reserved, reorder_level}
+```
+
+**Why genuine ternary (vs. binary decomposition):** a binary `variant⟷warehouse` paired with `variant⟷product` cannot express "variant X in warehouse Y has N units" — the count depends on all three. This argument is expanded in the Phase 4 report.
+
+### Group 4 — Commerce (5 entities)
+
+#### 3.11 CARTS
+Active shopping carts. A cart lives under one merchant's storefront.
+
+| Attribute | Type | Key / Null | Notes |
+|---|---|---|---|
+| `cart_id` | BIGINT | **PK** | |
+| `merchant_id` | BIGINT | FK → MERCHANTS, NOT NULL | Tenant anchor |
+| `customer_user_id` | BIGINT | FK → CUSTOMER, NULL | NULL for guest carts |
+| `session_token` | VARCHAR(64) | NULL | Guest-cart identifier |
+| `currency` | CHAR(3) | NOT NULL | Frozen at cart creation |
+| `status` | VARCHAR(20) | NOT NULL | `active` / `abandoned` / `converted` |
+| `expires_at` | TIMESTAMP | NULL | GC for abandoned carts |
+| `created_at` | TIMESTAMP | NOT NULL | |
+| `updated_at` | TIMESTAMP | NOT NULL | |
+
+Cart-line data will surface in Phase 2 as the `cart_items` bridge (M:N: carts ↔ product_variants, with `quantity` attribute).
+
+#### 3.12 ORDERS
+Finalized purchases. Immutable once placed (revisions are handled via refund/cancel).
+
+| Attribute | Type | Key / Null | Notes |
+|---|---|---|---|
+| `order_id` | BIGINT | **PK** | |
+| `merchant_id` | BIGINT | FK → MERCHANTS, NOT NULL | Tenant anchor |
+| `customer_user_id` | BIGINT | FK → CUSTOMER, NOT NULL | Registered customer required |
+| `order_number` | VARCHAR(20) | UNIQUE `(merchant_id, order_number)`, NOT NULL | Public ID (`SC-10001`) |
+| `status` | VARCHAR(20) | NOT NULL | `pending` / `paid` / `shipped` / `delivered` / `canceled` / `refunded` |
+| `shipping_address` | **COMPOSITE** | NOT NULL | Snapshot of customer address |
+| `billing_address` | **COMPOSITE** | NOT NULL | May differ from shipping |
+| `subtotal` | DECIMAL(12,2) | NOT NULL | Sum of line items |
+| `discount_total` | DECIMAL(12,2) | NOT NULL, default 0 | Applied coupons |
+| `tax_total` | DECIMAL(12,2) | NOT NULL, default 0 | |
+| `shipping_total` | DECIMAL(12,2) | NOT NULL, default 0 | Carrier fees |
+| `grand_total` | DECIMAL(12,2) | **DERIVED** | `subtotal − discount_total + tax_total + shipping_total` |
+| `currency` | CHAR(3) | NOT NULL | |
+| `placed_at` | TIMESTAMP | NOT NULL | |
+| `canceled_at` | TIMESTAMP | NULL | |
+
+**Address snapshots:** customer addresses can change over time; orders freeze them for accounting immutability.
+
+#### 3.13 ORDER_ITEMS (weak entity — #2)
+Line items exist only under their order.
+
+| Attribute | Type | Key / Null | Notes |
+|---|---|---|---|
+| `order_id` | BIGINT | **PK (part), FK → ORDERS** | Identifying relationship |
+| `line_no` | INT | **PK (part)** | **Partial key** — 1, 2, 3... within order |
+| `product_id` | BIGINT | FK → PRODUCTS, NOT NULL | |
+| `variant_no` | INT | FK → PRODUCT_VARIANTS (composite), NOT NULL | |
+| `merchant_id` | BIGINT | FK → MERCHANTS, NOT NULL | Tenant anchor |
+| `product_title` | VARCHAR(255) | NOT NULL | **Snapshot** — frozen at order time |
+| `variant_label` | VARCHAR(120) | NOT NULL | **Snapshot** — e.g., "Red / L" |
+| `sku` | VARCHAR(40) | NOT NULL | **Snapshot** |
+| `unit_price` | DECIMAL(12,2) | NOT NULL | **Snapshot** |
+| `quantity` | INT | NOT NULL | |
+| `line_subtotal` | DECIMAL(12,2) | **DERIVED** | `unit_price × quantity` |
+| `discount_amount` | DECIMAL(12,2) | NOT NULL, default 0 | Line-level discount |
+
+**Snapshot pattern:** `product_title`, `variant_label`, `sku`, `unit_price` freeze values — if the catalog later changes, order history stays intact. Phase 4 report discusses this controlled denormalization.
+
+#### 3.14 PAYMENTS
+One order may have several payments (partial, retries, post-refund re-charge) → 1:N.
+
+| Attribute | Type | Key / Null | Notes |
+|---|---|---|---|
+| `payment_id` | BIGINT | **PK** | |
+| `order_id` | BIGINT | FK → ORDERS, NOT NULL | |
+| `merchant_id` | BIGINT | FK → MERCHANTS, NOT NULL | Tenant anchor |
+| `payment_method` | VARCHAR(20) | NOT NULL | `credit_card` / `debit_card` / `bank_transfer` / `cash_on_delivery` / `wallet` |
+| `amount` | DECIMAL(12,2) | NOT NULL | |
+| `currency` | CHAR(3) | NOT NULL | |
+| `status` | VARCHAR(20) | NOT NULL | `pending` / `authorized` / `captured` / `failed` / `refunded` |
+| `gateway_reference` | VARCHAR(120) | NULL | Stripe / iyzico transaction ID |
+| `processed_at` | TIMESTAMP | NULL | Gateway confirmation time |
+| `created_at` | TIMESTAMP | NOT NULL | |
+
+#### 3.15 SHIPMENTS
+One order may be split across warehouses → 1:N.
+
+| Attribute | Type | Key / Null | Notes |
+|---|---|---|---|
+| `shipment_id` | BIGINT | **PK** | |
+| `order_id` | BIGINT | FK → ORDERS, NOT NULL | |
+| `merchant_id` | BIGINT | FK → MERCHANTS, NOT NULL | Tenant anchor |
+| `warehouse_id` | BIGINT | FK → WAREHOUSES, NOT NULL | Origin warehouse |
+| `carrier` | VARCHAR(40) | NOT NULL | "PTT", "Yurtiçi", "Aras", "DHL", ... |
+| `tracking_number` | VARCHAR(80) | NULL | |
+| `status` | VARCHAR(20) | NOT NULL | `preparing` / `shipped` / `in_transit` / `delivered` / `returned` |
+| `shipping_address` | **COMPOSITE** | NOT NULL | Snapshot |
+| `shipped_at` | TIMESTAMP | NULL | |
+| `delivered_at` | TIMESTAMP | NULL | |
+| `created_at` | TIMESTAMP | NOT NULL | |
+
+### Group 5 — Engagement + Audit (3 entities)
+
+#### 3.16 REVIEWS
+
+| Attribute | Type | Key / Null | Notes |
+|---|---|---|---|
+| `review_id` | BIGINT | **PK** | |
+| `product_id` | BIGINT | FK → PRODUCTS, NOT NULL | |
+| `customer_user_id` | BIGINT | FK → CUSTOMER, NOT NULL | |
+| `merchant_id` | BIGINT | FK → MERCHANTS, NOT NULL | Tenant anchor |
+| `order_id` | BIGINT | FK → ORDERS, NULL | Non-null = verified purchase |
+| `rating` | SMALLINT | NOT NULL | CHECK `BETWEEN 1 AND 5` |
+| `title` | VARCHAR(120) | NULL | Optional headline |
+| `body` | TEXT | NULL | Review text |
+| `is_verified_purchase` | BOOLEAN | NOT NULL, default FALSE | TRUE iff `order_id IS NOT NULL` |
+| `helpful_count` | INT | NOT NULL, default 0 | Community vote tally |
+| `status` | VARCHAR(20) | NOT NULL | `pending` / `published` / `rejected` |
+| `created_at` | TIMESTAMP | NOT NULL | |
+| `moderated_at` | TIMESTAMP | NULL | |
+| `moderated_by` | BIGINT | FK → STAFF, NULL | Reviewer (self-reference to staff) |
+
+**Business rule:** One customer can review a product at most once → `UNIQUE (product_id, customer_user_id)`.
+
+#### 3.17 DISCOUNTS
+
+| Attribute | Type | Key / Null | Notes |
+|---|---|---|---|
+| `discount_id` | BIGINT | **PK** | |
+| `merchant_id` | BIGINT | FK → MERCHANTS, NOT NULL | Tenant anchor |
+| `code` | VARCHAR(40) | UNIQUE `(merchant_id, code)`, NOT NULL | e.g., "SUMMER20" |
+| `discount_type` | VARCHAR(20) | NOT NULL | `percentage` / `fixed_amount` / `free_shipping` |
+| `value` | DECIMAL(12,2) | NOT NULL | `20` → 20% or 20 TL (depending on type) |
+| `min_order_amount` | DECIMAL(12,2) | NULL | Minimum cart subtotal |
+| `max_uses` | INT | NULL | NULL = unlimited |
+| `max_uses_per_customer` | INT | NULL, default 1 | Per-customer cap |
+| `used_count` | INT | NOT NULL, default 0 | Increments as redeemed |
+| `starts_at` | TIMESTAMP | NOT NULL | |
+| `ends_at` | TIMESTAMP | NULL | NULL = open-ended |
+| `is_active` | BOOLEAN | NOT NULL, default TRUE | Manual kill-switch |
+| `created_at` | TIMESTAMP | NOT NULL | |
+| `created_by` | BIGINT | FK → STAFF, NOT NULL | Author |
+
+Phase 2 will surface the `discount_usages(discount_id, order_id, used_at)` bridge (M:N: which orders used which coupon).
+
+#### 3.18 ACTIVITY_LOG (polymorphic audit)
+
+| Attribute | Type | Key / Null | Notes |
+|---|---|---|---|
+| `event_id` | BIGINT | **PK** | |
+| `merchant_id` | BIGINT | FK → MERCHANTS, NOT NULL | Tenant anchor |
+| `actor_user_id` | BIGINT | FK → USERS, NULL | NULL for system events |
+| `actor_type` | VARCHAR(20) | NOT NULL | `staff` / `customer` / `platform_admin` / `system` |
+| `entity_type` | VARCHAR(40) | NOT NULL | Polymorphic discriminator |
+| `entity_id` | BIGINT | NOT NULL | **No FK** — entity_id targets vary by entity_type |
+| `action` | VARCHAR(40) | NOT NULL | `created` / `updated` / `deleted` / `status_changed` / `logged_in` / … |
+| `payload_json` | JSON | NULL | Before/after diff or action details |
+| `ip_address` | VARCHAR(45) | NULL | IPv4 or IPv6 |
+| `user_agent` | VARCHAR(255) | NULL | Client info |
+| `occurred_at` | TIMESTAMP | NOT NULL | |
+
+**Polymorphic association:** `(entity_type, entity_id)` references different tables at runtime; no DB-level FK. This is a **controlled denormalization** — single uniform audit table at the cost of referential integrity. Phase 4 report discusses the trade-off.
 
 ---
 
-## 5. Cardinality & Participation Summary
+## 4. Relationships (Summary)
 
-A more formal version with all relationships will be in the Phase 2 ER diagram. Highlights:
+The ER diagram (Phase 2) will draw ~24 relationships. Quick inventory:
 
-| Relationship | Card. | Participation (left, right) |
-|--------------|-------|------------------------------|
-| user — workspace_member — workspace | M:N | (partial, total — via assertion) |
-| workspace_member — project_member — project | M:N | (partial, partial) |
-| project — tasks | 1:N | (partial, **total**) |
-| task — subtask (parent_task_id) | 1:N recursive | (partial, partial) |
-| task — task_dependencies — task | M:N recursive | (partial, partial) |
-| task — task_assignees — user | M:N | (partial, partial) |
-| task — task_tags — tag | M:N | (partial, partial) |
-| task — comments | 1:N **identifying** (weak) | (partial, **total**) |
-| comment — comment (parent) | 1:N recursive | (partial, partial) |
-| task — attachments | 1:N | (partial, **total**) |
-| attachments → {image, file, link} | EER specialization (disjoint, total) | total |
-| attachment_file → attachment_image | EER lattice (image is also a file) | total |
-| user × task × date — time_logs (ternary) | M:N:N | (partial, partial, partial) |
-| comment — mentions — {user ∪ tag ∪ project} | EER category | (partial, partial) |
-| any state-changing entity → activity_log | polymorphic 1:N | (partial, partial) |
-
----
-
-## 6. Constraints, Assumptions & Out-of-Scope
-
-### 6.1 Cross-Cutting Constraints
-- **Multi-tenancy:** Every query that touches data must filter by `workspace_id`. The application enforces this via a centralized `tenant_query()` helper; the database additionally enforces tenant consistency between related rows via composite foreign keys (e.g., `tasks(workspace_id, project_id)` REFERENCES `projects(workspace_id, project_id)`).
-- **Soft delete:** Workspaces, projects, and tasks support `archived_at` rather than physical DELETE; physical deletion is reserved for GDPR-style user erasure and bot deprovisioning.
-- **Time zones:** All timestamps are stored in UTC. Display conversion happens in the application layer.
-- **Character set:** UTF-8 (utf8mb4) throughout, with case-insensitive collation for emails.
-
-### 6.2 Assumptions
-- A single MySQL 8.0 instance hosts all tenants — schema isolation is logical, not physical.
-- The application layer enforces business invariants that cannot be expressed in MySQL (e.g., "every workspace has ≥ 1 owner", DAG acyclicity for task dependencies, "time_logs requires active assignment"). These are documented as `CREATE ASSERTION`-style constraints in the Phase 4 report even though MySQL does not enforce assertions natively.
-- File uploads store metadata only in this implementation; physical file storage uses a placeholder `storage_path` value (academic project scope).
-
-### 6.3 Out-of-Scope (for this academic project)
-- Real file storage (S3, local disk multipart upload)
-- Email/push notifications
-- Billing, subscription, or payment workflows
-- OAuth / SSO / two-factor authentication
-- Real-time collaboration (websockets, presence)
-- Search beyond simple `LIKE` and a FULLTEXT demo
-- Mobile or native clients
-- Webhooks, integrations, or public API beyond the application's own use
-- Internationalization beyond UTF-8
-- High-availability replication, sharding, or backup automation (manual `mysqldump` / binlog PITR is demonstrated in the Phase 4 report)
-- A scheduled `notifications` table — explicitly cut from scope to keep the entity count focused on academically meaningful concepts.
-
-### 6.4 Deferred to Phase 4 Report
-- Functional dependency analysis for every table
-- 1NF → 2NF → 3NF → BCNF walkthrough on a designated table (`task_assignees`)
-- 4NF MVD justification for the `task_tags` / `task_assignees` separation
-- Discussion of the controlled 3NF violation (denormalized `workspace_id`)
-- Relational algebra equivalents for 12 representative SQL queries (including a DIVISION query)
-- Two-session transaction isolation demo
-- Binlog point-in-time recovery walkthrough
+| # | Relationship | Cardinality | Participation (L / R) | Notes |
+|---|---|---|---|---|
+| R1  | `USERS ←isa→ CUSTOMER` | 1:1 (specialization) | partial / total | Overlapping with R2, R3 |
+| R2  | `USERS ←isa→ STAFF` | 1:1 (specialization) | partial / total | |
+| R3  | `USERS ←isa→ PLATFORM_ADMIN` | 1:1 (specialization) | partial / total | |
+| R4  | `STAFF ⟷ MERCHANTS` (via `merchant_staff`) | M:N | partial / total (≥1 owner) | Carries `role` attribute |
+| R5  | `MERCHANTS → owns → STAFF` | 1:1 (owner_user_id) | total / partial | Founding owner |
+| R6  | `MERCHANTS → has → PRODUCTS` | 1:N | partial / total | |
+| R7  | `MERCHANTS → has → CATEGORIES` | 1:N | partial / total | |
+| R8  | `MERCHANTS → has → WAREHOUSES` | 1:N | partial / total | |
+| R9  | `CATEGORIES → subcat → CATEGORIES` | 1:N recursive | partial / partial | Tree |
+| R10 | `PRODUCTS ⟷ CATEGORIES` (bridge) | M:N | partial / partial | |
+| R11 | `PRODUCTS → has → PRODUCT_VARIANTS` (weak/identifying) | 1:N identifying | partial / **total** | |
+| R12 | `STOCKED_AT(PRODUCT × VARIANT × WAREHOUSE)` | **Ternary M:N:N** | partial × partial × partial | Genuine ternary |
+| R13 | `MERCHANTS → has → CARTS` | 1:N | partial / total | |
+| R14 | `CUSTOMER → owns → CARTS` | 1:N | partial / partial | CART side (0,1): guest cart has null `customer_user_id` |
+| R15 | `CARTS ⟷ PRODUCT_VARIANTS` (bridge `cart_items`) | M:N | partial / partial | `quantity` attribute |
+| R16 | `MERCHANTS → has → ORDERS` | 1:N | partial / total | |
+| R17 | `CUSTOMER → places → ORDERS` | 1:N | partial / total | |
+| R18 | `ORDERS → has → ORDER_ITEMS` (weak/identifying) | 1:N identifying | partial / total | |
+| R19 | `PRODUCT_VARIANTS → referenced_by → ORDER_ITEMS` | 1:N | partial / total | |
+| R20 | `ORDERS → has → PAYMENTS` | 1:N | partial / total | |
+| R21 | `ORDERS → has → SHIPMENTS` | 1:N | partial / **total** | `shipments.order_id` NOT NULL — every shipment must belong to an order |
+| R22 | `WAREHOUSES → ships → SHIPMENTS` | 1:N | partial / total | |
+| R23 | `PRODUCTS ← writes → REVIEWS ← by → CUSTOMER` | 1:N + 1:N (via REVIEWS entity) | partial / **total** on both legs | REVIEWS is a full entity (not bridge); `product_id` and `customer_user_id` are NOT NULL → REVIEWS totally participates in both REVIEWED_AS and WRITTEN_BY |
+| R24 | `DISCOUNTS ⟷ ORDERS` (bridge `discount_usages`) | M:N | partial / partial | |
+| R25 | `USERS → actor_of → ACTIVITY_LOG` | 1:N | partial / partial | LOG side (0,1): system events have null `actor_user_id` |
 
 ---
 
-*End of Phase 1 Data Requirements.*
+## 5. Business Rules & Constraints
+
+1. **Tenant isolation** — every non-global table carries `merchant_id`; composite FKs `(merchant_id, X)` prevent cross-tenant references.
+2. **Global user identity** — one `users` row per person; membership in merchants is via `merchant_staff`, shopping is via `orders` keyed on `customer_user_id`.
+3. **Weak-entity identity** — `PRODUCT_VARIANTS`, `ORDER_ITEMS` share identity with their owner; cannot exist without it.
+4. **Every merchant has an owner** — `MERCHANTS.owner_user_id` NOT NULL at creation; enforced via `merchant_staff` with `role='owner'`.
+5. **One owner transition** — changing owner requires demoting previous owner to admin (app-level check in Phase 4).
+6. **Review uniqueness** — `UNIQUE (product_id, customer_user_id)` on `reviews`.
+7. **Rating range** — `CHECK (rating BETWEEN 1 AND 5)` on `reviews`.
+8. **Verified-purchase flag coherence** — `is_verified_purchase` TRUE iff `order_id IS NOT NULL`.
+9. **Order immutability** — once `orders.status` reaches `paid`, financial fields (`subtotal`, `tax_total`, etc.) are immutable; changes go through refund/cancel flow.
+10. **Line-item snapshot** — `order_items.product_title/sku/unit_price` frozen at order placement.
+11. **Inventory reservation** — before an order transitions to `paid`, `inventory.quantity_reserved` must have sufficient headroom; on cancel, reservation decremented.
+12. **Discount validity** — enforced at order placement: `NOW() BETWEEN starts_at AND COALESCE(ends_at, NOW())`, `is_active = TRUE`, `used_count < max_uses`.
+13. **Recursive category depth** — no enforced max, but Phase 5 report notes convention of ≤ 4 levels.
+14. **Audit immutability** — `activity_log` is append-only (app-level); no UPDATE/DELETE after insertion.
+15. **Currency consistency** — an order's `currency` must match `merchants.currency` for that tenant.
+16. **Cart → order transition** — on successful checkout, cart status set to `converted`; cart rows retained for analytics (not deleted).
+
+---
+
+## 6. Assumptions
+
+- **One-database-many-tenants**: shared-schema MT; no per-tenant databases or schemas.
+- **MySQL 8.0+** assumed for Phase 4/5 DDL (supports JSON natively, CHECK constraints enforced ≥ 8.0.16, recursive CTEs ≥ 8.0, functional/partial indexes ≥ 8.0). Phase 4 DDL notes: `BOOLEAN` maps to `TINYINT(1)`; prefer `DATETIME` over `TIMESTAMP` for dates beyond 2038; all tables must use `ENGINE=InnoDB` for FK enforcement; deferrable FK constraints are **not available** — insertion order must be managed at the application level.
+- **UTF-8** encoding everywhere; no locale-specific collations beyond default.
+- **Monetary values** stored as `DECIMAL(12,2)` in the merchant's currency (no automatic FX).
+- **Time** stored as UTC `DATETIME`; UI converts to merchant's timezone. (`DATETIME` used over `TIMESTAMP` to avoid the MySQL year-2038 range limit.)
+- **No soft deletes** except where noted (`merchants.suspended_at`, `products.status='archived'`, `users.is_active=FALSE`).
+- **Guest checkout** supported: cart and order allow `customer_user_id` NULL temporarily, but final order must have a non-null customer (account created at checkout if needed).
+- **Authentication** (tokens, sessions) out of scope for Phase 2 — handled at application layer.
+- **Payment gateway integration** is external; StoreCraft stores only `gateway_reference`, never card numbers (PCI-DSS compliance deferred).
+- **No i18n on product data** in Phase 2; `title` is single-locale. Phase 5 may add `product_translations`.
+
+---
+
+## 7. Functional Requirements (sample queries for Phase 4)
+
+The schema must support these operations efficiently:
+
+1. **Catalog browse (tenant-filtered):** "List active products in category X, paginated, sorted by price."
+2. **Product detail:** "For product P, return title, variants, images, avg rating, stock-by-warehouse."
+3. **Cart management:** "Add/remove/update line in cart, recompute totals."
+4. **Checkout:** atomic transaction across `cart → order → payment → inventory.reserve → shipment.prepare`.
+5. **Customer order history:** "Last 20 orders for customer C across all merchants they shopped at."
+6. **Merchant dashboard:** "Today's orders, revenue, top 5 products this month, low-stock alerts."
+7. **Inventory query:** "Show stock levels for SKU X across all warehouses of merchant M."
+8. **Discount redemption:** "Validate code C for cart total T, customer U, return discount amount."
+9. **Review feed:** "Product P, published reviews, sorted by helpful_count."
+10. **Audit trail:** "All actions by staff S in last 30 days."
+11. **Tenant-level RLS filter:** every query implicitly starts with `WHERE merchant_id = :current_tenant`.
+
+---
+
+## 8. Out of Scope (Phase 2)
+
+Deferred to later phases or excluded entirely:
+
+- **Multi-vendor marketplaces** — a merchant having sub-sellers (Amazon-seller-like).
+- **Product Q&A** — customer-to-merchant questions on product pages.
+- **Customer wishlists / favorites.**
+- **Abandoned-cart email recovery** workflows.
+- **Returns & refund requests** (stored as `payment.status='refunded'`; no full RMA flow).
+- **Gift cards / store credit.**
+- **Tax calculation rules** (stored as flat `tax_total` per order; no tax jurisdiction tables).
+- **Shipping rate engine** (stored as flat `shipping_total`; no zone/weight/carrier-rate tables).
+- **Analytics / reporting denormalized tables** (Phase 5 may introduce materialized views).
+- **Webhooks / external integrations** — Shopify apps equivalent.
+- **Internationalization** of product data (translations).
+- **Search engine** (Elasticsearch, Algolia) — handled outside RDBMS.
+- **Image storage** — files on S3/CDN; DB stores only URLs if added later.
+
+---
+
+*End of Phase 1 Data Requirements — built with step-by-step user confirmation.*
+
