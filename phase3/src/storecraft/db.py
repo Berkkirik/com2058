@@ -54,9 +54,22 @@ SessionLocal = sessionmaker(
 
 
 def get_db() -> Generator[Session, None, None]:
-    """FastAPI dependency — yields a session, closes it after the request."""
+    """FastAPI dependency — yields a session, rolls back on error, always closes.
+
+    Behavior:
+      - Yields a fresh Session per request.
+      - On any raised exception in the endpoint body, the session is rolled
+        back before the exception propagates to FastAPI's handler chain.
+      - The session is always closed in the `finally` block, even on
+        unexpected shutdown, so connection leak cannot occur.
+    """
     session = SessionLocal()
     try:
         yield session
+    except Exception:
+        # Explicit rollback so a half-applied transaction does not leak state
+        # to the next caller holding the same underlying connection.
+        session.rollback()
+        raise
     finally:
         session.close()
