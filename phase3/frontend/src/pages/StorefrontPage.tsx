@@ -17,7 +17,7 @@ export default function StorefrontPage() {
   });
   const productsQ = useQuery({
     queryKey: ["products", slug, q],
-    queryFn: () => api.listProducts(slug, q),
+    queryFn: () => api.listProducts(slug, { q }),
     enabled: !!slug,
   });
   const categoriesQ = useQuery({
