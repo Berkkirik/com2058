@@ -37,3 +37,15 @@ mysql_data/
 # Ralph loop state (session-local)
 .claude/ralph-loop.local.md
 .claude/agents/
+
+# Frontend
+phase3/frontend/node_modules/
+phase3/frontend/dist/
+phase3/frontend/src/**/*.js
+phase3/frontend/src/**/*.js.map
+phase3/frontend/package-lock.json
+phase3/frontend/phase3/
+phase3/phase3/
+phase3/tasks/
+phase3/frontend/tsconfig.tsbuildinfo
+phase3/frontend/tasks/

@@ -349,4 +349,125 @@ FROM orders WHERE order_id = @oid;
 
 ROLLBACK; -- demo is read-only — change to COMMIT in production
 
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- CHECK CONSTRAINT VIOLATION DEMOS  (Q31-Q35)
+-- ────────────────────────────────────────────────────────────────────────────
+-- MySQL 8.0.16+ enforces CHECK constraints (in 5.7 they were silently parsed
+-- but ignored).  The schema declares 14 CHECK constraints; below we trigger
+-- five of them on purpose.  Every INSERT here is *expected to fail* with
+--
+--     ERROR 3819 (HY000): Check constraint '<name>' is violated.
+--
+-- Run interactively or with `mysql --force ...` so the script doesn't halt
+-- on the first ERROR.  Each block is wrapped in BEGIN/ROLLBACK so even if a
+-- statement somehow succeeds the database is left untouched.
+--
+-- Why this matters: declarative constraints push integrity *into* the engine —
+-- application bugs cannot violate them.  The Phase 4 report references this
+-- block under §5 (Normalization → Integrity).
+-- ════════════════════════════════════════════════════════════════════════════
+
+-- ──────────────────────────── Q31  Reviews: rating BETWEEN 1 AND 5 ──────────
+-- Constraint: ck_reviews_rating CHECK (rating BETWEEN 1 AND 5)
+-- Attempted violation: rating = 6.
+
+START TRANSACTION;
+INSERT INTO reviews (
+    product_id, customer_user_id, merchant_id, order_id,
+    rating, title, body, is_verified_purchase, status
+)
+SELECT p.product_id, c.user_id, p.merchant_id, NULL,
+       6,                          -- ← out of range, fires ck_reviews_rating
+       'demo violation', 'demo body', 0, 'pending'
+FROM   products p
+JOIN   customers c ON c.user_id = (SELECT MIN(user_id) FROM customers)
+LIMIT 1;
+ROLLBACK;
+
+
+-- ──────────────────────────── Q32  Payments: amount > 0 ─────────────────────
+-- Constraint: ck_payments_amount CHECK (amount > 0)
+-- Attempted violation: amount = -5.00 (refund-style negatives must use the
+-- `refunded` payment status with a *positive* amount and a sign convention
+-- in the application layer; the column itself is non-negative).
+
+START TRANSACTION;
+INSERT INTO payments (
+    order_id, merchant_id, payment_method, amount, currency, status
+)
+SELECT o.order_id, o.merchant_id, 'card',
+       -5.00,                      -- ← negative, fires ck_payments_amount
+       o.currency, 'initiated'
+FROM   orders o
+ORDER BY o.order_id LIMIT 1;
+ROLLBACK;
+
+
+-- ──────────────────────────── Q33  Order items: quantity >= 1 ───────────────
+-- Constraint: ck_oi_amounts CHECK (unit_price >= 0 AND quantity >= 1)
+-- Attempted violation: quantity = 0.
+
+START TRANSACTION;
+INSERT INTO order_items (
+    order_id, line_no, product_id, variant_no,
+    product_title, variant_label, sku, unit_price, quantity
+)
+SELECT o.order_id,
+       (SELECT COALESCE(MAX(line_no), 0) + 1 FROM order_items WHERE order_id = o.order_id),
+       pv.product_id, pv.variant_no,
+       p.title, 'demo', pv.sku,
+       p.base_price,
+       0                           -- ← zero quantity, fires ck_oi_amounts
+FROM   orders           o
+JOIN   products         p  ON p.merchant_id = o.merchant_id
+JOIN   product_variants pv ON pv.product_id = p.product_id
+ORDER BY o.order_id, pv.product_id, pv.variant_no LIMIT 1;
+ROLLBACK;
+
+
+-- ──────────────────────────── Q34  Inventory: reserved <= on_hand  ──────────
+-- Constraint: ck_inv_reserved_le_onhand CHECK (qty_reserved <= qty_on_hand)
+-- Attempted violation: reserve more than is physically on hand.  This is the
+-- "oversell" case the multi-tenant inventory model deliberately prevents.
+
+-- NOTE: MySQL forbids referencing the same table in a subquery of the UPDATE
+-- target, so the row-pick is wrapped in a derived table (`t`) to side-step
+-- the rule.  Pure SQL standard would allow the inner SELECT directly.
+
+START TRANSACTION;
+UPDATE inventory
+   SET qty_reserved = qty_on_hand + 10   -- ← over-reservation
+ WHERE (product_id, variant_no, warehouse_id) = (
+     SELECT product_id, variant_no, warehouse_id
+     FROM ( SELECT product_id, variant_no, warehouse_id
+            FROM inventory
+            ORDER BY product_id LIMIT 1 ) t
+ );
+ROLLBACK;
+
+
+-- ──────────────────────────── Q35  Discounts: ends_at > starts_at  ──────────
+-- Constraint: ck_discounts_window CHECK (ends_at IS NULL OR ends_at > starts_at)
+-- Attempted violation: an end date one day BEFORE the start date — the kind
+-- of off-by-one a careless admin form would let through, but the engine
+-- rejects.
+
+START TRANSACTION;
+INSERT INTO discounts (
+    merchant_id, code, discount_type, value, max_uses,
+    starts_at, ends_at, is_active, created_by
+)
+SELECT m.merchant_id,
+       CONCAT('BAD-', UNIX_TIMESTAMP()),
+       'percentage', 10, NULL,
+       NOW(),                      -- starts now
+       NOW() - INTERVAL 1 DAY,     -- ← ends BEFORE start, fires ck_discounts_window
+       1,
+       (SELECT user_id FROM staff ORDER BY user_id LIMIT 1)
+FROM   merchants m
+ORDER BY m.merchant_id LIMIT 1;
+ROLLBACK;
+
+
 -- End of 999_showcase_queries.sql

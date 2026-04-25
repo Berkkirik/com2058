@@ -1,5 +1,5 @@
 import { motion, useMotionValue, useSpring } from "framer-motion";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 
 /**
  * Spotlight cursor — a soft glowing disc that follows the mouse.
@@ -17,7 +17,6 @@ export default function SpotlightCursor({
   const y = useMotionValue(-1000);
   const springX = useSpring(x, { stiffness: 90, damping: 16 });
   const springY = useSpring(y, { stiffness: 90, damping: 16 });
-  const hoverRef = useRef(false);
 
   useEffect(() => {
     if (!window.matchMedia("(pointer: fine)").matches) return;

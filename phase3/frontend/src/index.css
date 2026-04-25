@@ -259,6 +259,35 @@
   }
 }
 
+/* ─────────────── Explicit keyframes ───────────────
+   Tailwind's `theme.keyframes` are tree-shaken unless referenced from a
+   compiled `animate-*` utility class. These rules use `animation: …` from
+   raw CSS, which Tailwind does not scan, so we declare the keyframes here
+   explicitly to guarantee they ship in the final bundle. Without this,
+   every `.stagger-child > *` stayed pinned at `opacity: 0` → invisible
+   product tiles and variant rows. */
+@keyframes fade-up {
+  0%   { opacity: 0; transform: translateY(16px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade-in {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+/* Respect prefers-reduced-motion — skip animation but keep end state. */
+@media (prefers-reduced-motion: reduce) {
+  .stagger-child > *,
+  .shimmer {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+}
+
 @layer utilities {
   /* Hide focus outlines for mouse, keep for keyboard */
   *:focus-visible {
