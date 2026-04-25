@@ -2,26 +2,30 @@
 
 **Project:** StoreCraft — Multi-Tenant E-Commerce Platform SaaS
 **Course:** COM2058 Database Management Systems, Ankara University
-**Author:** Berk Kırık
-**Status:** WIP — built step by step with user confirmation
+**Authors:** 
+- Berk KIRIK -25812633 
+- Atahan YILDIRIM -23291292 
+- Melih Ozulu -21290142
+
 
 ---
 
 ## 1. Overview
 
-StoreCraft is a multi-tenant SaaS platform (Shopify-clone) that lets independent merchants launch online stores. Each merchant (tenant) maintains its own catalog, customer base, orders, and inventory; data is isolated at the schema level. End-users (customers) are modeled globally via an EER specialization so one person can shop across many merchant stores with a single identity.
+StoreCraft is a multi-tenant SaaS platform  that lets independent merchants launch online stores. Each merchant (tenant) maintains its own catalog, customer base, orders, and inventory; data is isolated at the schema level. End-users are modeled globally via three binary **IS_A** (1:1) subtype relationships so one person can shop across many merchant stores with a single identity.
 
-### Scope (Phase 1/2, "Full Commerce")
-- ✓ Catalog (products, variants, categories)
-- ✓ Inventory (warehouse-level stock, ternary relationship)
-- ✓ Shopping (carts, orders, line items)
-- ✓ Payments + Shipments
-- ✓ Reviews + Discount codes
-- ✓ Audit log
-- ✗ Out of scope: multi-vendor marketplaces, customer wishlists, Q&A, abandoned-cart recovery, refund/return flows
+### 1.1 Scope of the Conceptual Design 
+The conceptual data model presented in this document and refined in the Phase 2 ER diagram covers the full operational lifecycle of a multi-tenant e-commerce platform. The functional domains in scope are formalised as follows:
+
+1. **Catalog management.** Products, product variants (modelled as a weak entity dependent on its parent product), and a recursive category hierarchy under each merchant.
+2. **Warehouse and inventory control.** Per-merchant warehouses and stock levels modelled as a genuine ternary relationship `STOCKED_AT(PRODUCTS × PRODUCT_VARIANTS × WAREHOUSES)`, with derived availability quantities.
+3. **Shopping workflow.** Customer shopping carts (including guest carts), finalised orders, and order line items (modelled as a second weak entity dependent on its order).
+4. **Order fulfilment.** Payments and shipments associated with each order, with one-to-many cardinality on both legs to permit partial captures and split fulfilment.
+5. **Customer engagement.** Product reviews authored by customers and merchant-issued discount codes redeemable on orders.
+6. **Auditability.** An append-only activity log implementing a polymorphic association over the auditable entity set.
 
 ### Entity count
-**17 entity types** in the ER diagram (4 Identity + 4 Tenant/Catalog + 1 Warehouses + 5 Commerce + 3 Engagement). **INVENTORY** is modeled in Chen ER as a **ternary relationship** `STOCKED_AT(PRODUCTS × PRODUCT_VARIANTS × WAREHOUSES)` with attributes, not a standalone entity. During Phase 3 relational mapping, the ternary becomes its own bridge table — yielding 18 total tables. Additional bridge tables (`merchant_staff`, `product_categories`, `cart_items`, `discount_usages`) also emerge then.
+**17 entity types** in the ER diagram (4 Identity + 4 Tenant/Catalog + 1 Warehouses + 5 Commerce + 3 Engagement). **INVENTORY** -> **ternary relationship** `STOCKED_AT(PRODUCTS × PRODUCT_VARIANTS × WAREHOUSES)` with attributes, not a standalone entity. During Phase 3 relational mapping, the ternary becomes its own bridge table — yielding 18 total tables. Additional bridge tables (`merchant_staff`, `product_categories`, `cart_items`, `discount_usages`) also emerge then.
 
 ---
 
@@ -30,19 +34,17 @@ StoreCraft is a multi-tenant SaaS platform (Shopify-clone) that lets independent
 ### Tenancy
 - **Tenant root:** `MERCHANTS` — each row = one store owner / shop
 - **Tenant-scoped:** every catalog/commerce/inventory/audit table carries `merchant_id`
-- **Tenant-free (global):** `USERS`, subclasses (CUSTOMER, STAFF, PLATFORM_ADMIN)
+- **Tenant-free (global):** `USERS` and its three subtype entities (CUSTOMER, STAFF, PLATFORM_ADMIN)
 
-### EER specialization on USERS
-- **Subclasses:** CUSTOMER, STAFF, PLATFORM_ADMIN (3)
-- **Disjointness:** **Overlapping** — one user may be both a customer (shopping elsewhere) and staff (employed at their own store)
-- **Participation:** **Partial** — a freshly-registered user may belong to no subclass yet
-- Visual:
+### USERS subtypes — modelled as IS_A 
+- **Subtypes:** CUSTOMER, STAFF, PLATFORM_ADMIN (3 separate entities)
+- **Subtype rows may coexist:** one `USERS` row may simultaneously have a CUSTOMER row *and* a STAFF row (e.g., a merchant owner who also shops on other stores).
+- **Subtype rows are optional:** a freshly-registered user may have no subtype row at all.
+- **Notation:**  — three binary 1:1 `IS_A` relationships. The EER `◯d/◯o` specialization circle from Ch08 is **not** used.
   ```
-            USERS
-              │
-           ─◯o─        (overlapping, partial)
-           ╱ │ ╲
-     CUSTOMER STAFF PLATFORM_ADMIN
+   USERS ──(0,1)── IS_A_CUST  ──(1,1)── CUSTOMER
+   USERS ──(0,1)── IS_A_STAFF ──(1,1)── STAFF
+   USERS ──(0,1)── IS_A_PA    ──(1,1)── PLATFORM_ADMIN
   ```
 
 ### Staff roles
@@ -54,8 +56,8 @@ Stored as a plain string on the `merchant_staff` bridge (4 values): `owner`, `ad
 
 ### Group 1 — Identity (4 entities)
 
-#### 3.1 USERS (superclass)
-Shared attributes every authenticated person carries.
+#### 3.1 USERS (base entity)
+Shared attributes every authenticated person carries. The three IS_A subtypes (CUSTOMER, STAFF, PLATFORM_ADMIN) reference this row.
 
 | Attribute | Type | Key / Null | Notes |
 |---|---|---|---|
@@ -65,45 +67,45 @@ Shared attributes every authenticated person carries.
 | `first_name` | VARCHAR(80) | NOT NULL | |
 | `last_name` | VARCHAR(80) | NOT NULL | |
 | `phone` | VARCHAR(20) | NULL | E.164 format |
-| `email_verified_at` | TIMESTAMP | NULL | Non-null = verified |
+| `email_verified_at` | DATETIME | NULL | Non-null = verified |
 | `is_active` | BOOLEAN | NOT NULL, default TRUE | Soft-disable flag |
-| `last_login_at` | TIMESTAMP | NULL | |
-| `created_at` | TIMESTAMP | NOT NULL | |
-| `updated_at` | TIMESTAMP | NOT NULL | |
+| `last_login_at` | DATETIME | NULL | |
+| `created_at` | DATETIME | NOT NULL | |
+| `updated_at` | DATETIME | NOT NULL | |
 
-#### 3.2 CUSTOMER (subclass)
-Specialization of USERS — users who shop on any merchant's store.
+#### 3.2 CUSTOMER (IS_A subtype of USERS)
+Subtype of USERS via the IS_A_CUST relationship — users who shop on any merchant's store.
 
 | Attribute | Type | Key / Null | Notes |
 |---|---|---|---|
-| `user_id` | BIGINT | **PK, FK → USERS** | ISA inheritance |
-| `default_shipping_address` | **COMPOSITE** | NULL | `{street, city, state, postal_code, country}` — Chen ER composite attribute |
+| `user_id` | BIGINT | **PK, FK → USERS** | Shared PK — IS_A subtype reference |
+| `default_shipping_address` | **COMPOSITE** | NULL | `{street, city, state, postal_code, country}`  |
 | `date_of_birth` | DATE | NULL | |
 | `loyalty_points` | INT | NOT NULL, default 0 | Across all merchants (global balance) |
 | `accepts_marketing` | BOOLEAN | NOT NULL, default FALSE | Global opt-in |
 | `referral_code` | VARCHAR(20) | UNIQUE, NULL | |
 
-#### 3.3 STAFF (subclass)
-Specialization of USERS — users employed at one or more merchants.
+#### 3.3 STAFF (IS_A subtype of USERS)
+Subtype of USERS via the IS_A_STAFF relationship — users employed at one or more merchants.
 
 | Attribute | Type | Key / Null | Notes |
 |---|---|---|---|
-| `user_id` | BIGINT | **PK, FK → USERS** | ISA inheritance |
+| `user_id` | BIGINT | **PK, FK → USERS** | Shared PK — IS_A subtype reference |
 | `employment_type` | VARCHAR(20) | NOT NULL | `full_time` / `part_time` / `contractor` |
-| `hired_at` | TIMESTAMP | NOT NULL | First-employment date across StoreCraft |
+| `hired_at` | DATETIME | NOT NULL | First-employment date across StoreCraft |
 | `title` | VARCHAR(80) | NOT NULL | e.g. "Store Manager", "Sales Assistant" |
 | `commission_rate` | DECIMAL(5,2) | NULL | % of sales; null if salaried |
 | `employment_status` | VARCHAR(20) | NOT NULL | `active` / `on_leave` / `terminated` |
 
-#### 3.4 PLATFORM_ADMIN (subclass)
-Specialization of USERS — StoreCraft platform employees (our own team).
+#### 3.4 PLATFORM_ADMIN (IS_A subtype of USERS)
+Subtype of USERS via the IS_A_PA relationship — StoreCraft platform employees (our own team).
 
 | Attribute | Type | Key / Null | Notes |
 |---|---|---|---|
-| `user_id` | BIGINT | **PK, FK → USERS** | ISA inheritance |
+| `user_id` | BIGINT | **PK, FK → USERS** | Shared PK — IS_A subtype reference |
 | `admin_level` | VARCHAR(20) | NOT NULL | `super_admin` / `support` / `engineer` / `billing` |
 | `department` | VARCHAR(50) | NOT NULL | e.g. "Customer Success", "Trust & Safety" |
-| `hired_at` | TIMESTAMP | NOT NULL | |
+| `hired_at` | DATETIME | NOT NULL | |
 
 ### Group 2 — Tenant + Catalog (4 entities)
 
@@ -116,15 +118,15 @@ One row = one store = one tenant. All catalog/commerce data below carries `merch
 | `slug` | VARCHAR(64) | UNIQUE, NOT NULL | URL slug (`storecraft.com/{slug}`) |
 | `store_name` | VARCHAR(120) | NOT NULL | Public display name |
 | `owner_user_id` | BIGINT | FK → STAFF, NOT NULL | Founding staff (owner) |
-| `business_address` | **COMPOSITE** | NOT NULL | `{street, city, state, postal_code, country}` — Chen ER composite attribute |
+| `business_address` | **COMPOSITE** | NOT NULL | `{street, city, state, postal_code, country}` — |
 | `contact_email` | VARCHAR(255) | NOT NULL | Support email |
 | `currency` | CHAR(3) | NOT NULL | ISO 4217 (USD, TRY, EUR) |
 | `plan` | VARCHAR(20) | NOT NULL | `starter` / `growth` / `enterprise` |
-| `created_at` | TIMESTAMP | NOT NULL | |
-| `activated_at` | TIMESTAMP | NULL | When plan payment confirmed |
-| `suspended_at` | TIMESTAMP | NULL | Non-null = suspended |
+| `created_at` | DATETIME | NOT NULL | |
+| `activated_at` | DATETIME | NULL | When plan payment confirmed |
+| `suspended_at` | DATETIME | NULL | Non-null = suspended |
 
-#### 3.6 PRODUCTS (catalog base — triggers specialization in Phase 2)
+#### 3.6 PRODUCTS
 
 | Attribute | Type | Key / Null | Notes |
 |---|---|---|---|
@@ -133,17 +135,12 @@ One row = one store = one tenant. All catalog/commerce data below carries `merch
 | `slug` | VARCHAR(120) | NOT NULL | UNIQUE `(merchant_id, slug)` |
 | `title` | VARCHAR(255) | NOT NULL | |
 | `description` | TEXT | NULL | |
-| `product_type` | VARCHAR(20) | NOT NULL | **Discriminator** for specialization: `physical` / `digital` / `subscription` |
+| `product_type` | VARCHAR(20) | NOT NULL | Enum kept as plain attribute: `physical` / `digital` / `subscription` (no subtype entities in Phase 2) |
 | `base_price` | DECIMAL(12,2) | NOT NULL | Variants may override |
 | `currency` | CHAR(3) | NOT NULL | |
 | `status` | VARCHAR(20) | NOT NULL | `draft` / `active` / `archived` |
-| `created_at` | TIMESTAMP | NOT NULL | |
-| `updated_at` | TIMESTAMP | NOT NULL | |
-
-**Phase 2 specialization preview:** `PRODUCTS → {PHYSICAL_PRODUCT, DIGITAL_PRODUCT, SUBSCRIPTION_PRODUCT}` with attribute-defined (disjoint, total) subclassing on `product_type`. Subclass-only attributes:
-- `PHYSICAL_PRODUCT`: `weight_grams`, `length_cm`, `width_cm`, `height_cm`, `requires_shipping`
-- `DIGITAL_PRODUCT`: `file_url`, `download_limit`, `file_size_bytes`
-- `SUBSCRIPTION_PRODUCT`: `billing_period`, `trial_days`, `renewal_count_limit`
+| `created_at` | DATETIME | NOT NULL | |
+| `updated_at` | DATETIME | NOT NULL | |
 
 #### 3.7 PRODUCT_VARIANTS (weak entity)
 No standalone identity — a variant only exists under a product.
@@ -161,7 +158,7 @@ No standalone identity — a variant only exists under a product.
 | `barcode` | VARCHAR(64) | NULL | EAN / UPC |
 | `is_default` | BOOLEAN | NOT NULL, default FALSE | Default variant flag |
 
-**Weak entity semantics:** Compound PK `(product_id, variant_no)`; double-rectangle in Chen ER.
+**Weak entity semantics:** Compound PK `(product_id, variant_no)`; 
 
 #### 3.8 CATEGORIES (recursive hierarchy)
 
@@ -173,11 +170,11 @@ No standalone identity — a variant only exists under a product.
 | `slug` | VARCHAR(80) | NOT NULL | UNIQUE `(merchant_id, slug)` |
 | `name` | VARCHAR(120) | NOT NULL | |
 | `display_order` | SMALLINT | NOT NULL, default 0 | Sibling ordering |
-| `created_at` | TIMESTAMP | NOT NULL | |
+| `created_at` | DATETIME | NOT NULL | |
 
 **Recursive relationship:** `parent_category_id → category_id` creates a tree (e.g., Electronics → Phones → Smartphones).
 
-### Group 3 — Inventory (2 entities + ternary relationship)
+### Group 3 — Inventory (1 entity + 1 ternary relationship)
 
 #### 3.9 WAREHOUSES
 Physical storage locations. Each warehouse belongs to one merchant.
@@ -189,7 +186,7 @@ Physical storage locations. Each warehouse belongs to one merchant.
 | `name` | VARCHAR(80) | NOT NULL | e.g., "Ankara Main Warehouse" |
 | `address` | **COMPOSITE** | NOT NULL | `{street, city, state, postal_code, country}` |
 | `is_active` | BOOLEAN | NOT NULL, default TRUE | Operational flag |
-| `created_at` | TIMESTAMP | NOT NULL | |
+| `created_at` | DATETIME | NOT NULL | |
 
 #### 3.10 INVENTORY (ternary relationship: PRODUCT × VARIANT × WAREHOUSE)
 Genuine ternary — quantity is defined only by the triple of (product, variant, warehouse). Binary decomposition loses information.
@@ -202,14 +199,13 @@ Genuine ternary — quantity is defined only by the triple of (product, variant,
 | `merchant_id` | BIGINT | FK → MERCHANTS, NOT NULL | Tenant anchor (composite-FK enforcement) |
 | `quantity_on_hand` | INT | NOT NULL, default 0 | Physical stock |
 | `quantity_reserved` | INT | NOT NULL, default 0 | Reserved by carts/orders |
-| `quantity_available` | INT | **DERIVED** | `= on_hand − reserved` (Chen ER derived attribute, dashed ellipse) |
+| `quantity_available` | INT | **DERIVED** | `= on_hand − reserved`  |
 | `reorder_level` | INT | NULL | Low-stock threshold |
-| `last_restocked_at` | TIMESTAMP | NULL | |
-| `updated_at` | TIMESTAMP | NOT NULL | |
+| `last_restocked_at` | DATETIME | NULL | |
+| `updated_at` | DATETIME | NOT NULL | |
 
 **Compound PK:** `(product_id, variant_no, warehouse_id)`.
 
-**Ternary in Chen ER (Fig 7.17 style):**
 ```
     PRODUCTS           VARIANTS            WAREHOUSES
         \                  |                  /
@@ -233,9 +229,9 @@ Active shopping carts. A cart lives under one merchant's storefront.
 | `session_token` | VARCHAR(64) | NULL | Guest-cart identifier |
 | `currency` | CHAR(3) | NOT NULL | Frozen at cart creation |
 | `status` | VARCHAR(20) | NOT NULL | `active` / `abandoned` / `converted` |
-| `expires_at` | TIMESTAMP | NULL | GC for abandoned carts |
-| `created_at` | TIMESTAMP | NOT NULL | |
-| `updated_at` | TIMESTAMP | NOT NULL | |
+| `expires_at` | DATETIME | NULL | GC for abandoned carts |
+| `created_at` | DATETIME | NOT NULL | |
+| `updated_at` | DATETIME | NOT NULL | |
 
 Cart-line data will surface in Phase 2 as the `cart_items` bridge (M:N: carts ↔ product_variants, with `quantity` attribute).
 
@@ -257,8 +253,8 @@ Finalized purchases. Immutable once placed (revisions are handled via refund/can
 | `shipping_total` | DECIMAL(12,2) | NOT NULL, default 0 | Carrier fees |
 | `grand_total` | DECIMAL(12,2) | **DERIVED** | `subtotal − discount_total + tax_total + shipping_total` |
 | `currency` | CHAR(3) | NOT NULL | |
-| `placed_at` | TIMESTAMP | NOT NULL | |
-| `canceled_at` | TIMESTAMP | NULL | |
+| `placed_at` | DATETIME | NOT NULL | |
+| `canceled_at` | DATETIME | NULL | |
 
 **Address snapshots:** customer addresses can change over time; orders freeze them for accounting immutability.
 
@@ -295,8 +291,8 @@ One order may have several payments (partial, retries, post-refund re-charge) �
 | `currency` | CHAR(3) | NOT NULL | |
 | `status` | VARCHAR(20) | NOT NULL | `pending` / `authorized` / `captured` / `failed` / `refunded` |
 | `gateway_reference` | VARCHAR(120) | NULL | Stripe / iyzico transaction ID |
-| `processed_at` | TIMESTAMP | NULL | Gateway confirmation time |
-| `created_at` | TIMESTAMP | NOT NULL | |
+| `processed_at` | DATETIME | NULL | Gateway confirmation time |
+| `created_at` | DATETIME | NOT NULL | |
 
 #### 3.15 SHIPMENTS
 One order may be split across warehouses → 1:N.
@@ -311,9 +307,9 @@ One order may be split across warehouses → 1:N.
 | `tracking_number` | VARCHAR(80) | NULL | |
 | `status` | VARCHAR(20) | NOT NULL | `preparing` / `shipped` / `in_transit` / `delivered` / `returned` |
 | `shipping_address` | **COMPOSITE** | NOT NULL | Snapshot |
-| `shipped_at` | TIMESTAMP | NULL | |
-| `delivered_at` | TIMESTAMP | NULL | |
-| `created_at` | TIMESTAMP | NOT NULL | |
+| `shipped_at` | DATETIME | NULL | |
+| `delivered_at` | DATETIME | NULL | |
+| `created_at` | DATETIME | NOT NULL | |
 
 ### Group 5 — Engagement + Audit (3 entities)
 
@@ -332,8 +328,8 @@ One order may be split across warehouses → 1:N.
 | `is_verified_purchase` | BOOLEAN | NOT NULL, default FALSE | TRUE iff `order_id IS NOT NULL` |
 | `helpful_count` | INT | NOT NULL, default 0 | Community vote tally |
 | `status` | VARCHAR(20) | NOT NULL | `pending` / `published` / `rejected` |
-| `created_at` | TIMESTAMP | NOT NULL | |
-| `moderated_at` | TIMESTAMP | NULL | |
+| `created_at` | DATETIME | NOT NULL | |
+| `moderated_at` | DATETIME | NULL | |
 | `moderated_by` | BIGINT | FK → STAFF, NULL | Reviewer (self-reference to staff) |
 
 **Business rule:** One customer can review a product at most once → `UNIQUE (product_id, customer_user_id)`.
@@ -351,10 +347,10 @@ One order may be split across warehouses → 1:N.
 | `max_uses` | INT | NULL | NULL = unlimited |
 | `max_uses_per_customer` | INT | NULL, default 1 | Per-customer cap |
 | `used_count` | INT | NOT NULL, default 0 | Increments as redeemed |
-| `starts_at` | TIMESTAMP | NOT NULL | |
-| `ends_at` | TIMESTAMP | NULL | NULL = open-ended |
+| `starts_at` | DATETIME | NOT NULL | |
+| `ends_at` | DATETIME | NULL | NULL = open-ended |
 | `is_active` | BOOLEAN | NOT NULL, default TRUE | Manual kill-switch |
-| `created_at` | TIMESTAMP | NOT NULL | |
+| `created_at` | DATETIME | NOT NULL | |
 | `created_by` | BIGINT | FK → STAFF, NOT NULL | Author |
 
 Phase 2 will surface the `discount_usages(discount_id, order_id, used_at)` bridge (M:N: which orders used which coupon).
@@ -373,7 +369,7 @@ Phase 2 will surface the `discount_usages(discount_id, order_id, used_at)` bridg
 | `payload_json` | JSON | NULL | Before/after diff or action details |
 | `ip_address` | VARCHAR(45) | NULL | IPv4 or IPv6 |
 | `user_agent` | VARCHAR(255) | NULL | Client info |
-| `occurred_at` | TIMESTAMP | NOT NULL | |
+| `occurred_at` | DATETIME | NOT NULL | |
 
 **Polymorphic association:** `(entity_type, entity_id)` references different tables at runtime; no DB-level FK. This is a **controlled denormalization** — single uniform audit table at the cost of referential integrity. Phase 4 report discusses the trade-off.
 
@@ -381,35 +377,36 @@ Phase 2 will surface the `discount_usages(discount_id, order_id, used_at)` bridg
 
 ## 4. Relationships (Summary)
 
-The ER diagram (Phase 2) will draw ~24 relationships. Quick inventory:
+The ER diagram (Phase 2) draws **26 relationships** (R1-R25 + R23b — REVIEWS participates in two binary relationships, one with PRODUCTS and one with CUSTOMER). Quick inventory:
 
 | # | Relationship | Cardinality | Participation (L / R) | Notes |
 |---|---|---|---|---|
-| R1  | `USERS ←isa→ CUSTOMER` | 1:1 (specialization) | partial / total | Overlapping with R2, R3 |
-| R2  | `USERS ←isa→ STAFF` | 1:1 (specialization) | partial / total | |
-| R3  | `USERS ←isa→ PLATFORM_ADMIN` | 1:1 (specialization) | partial / total | |
-| R4  | `STAFF ⟷ MERCHANTS` (via `merchant_staff`) | M:N | partial / total (≥1 owner) | Carries `role` attribute |
-| R5  | `MERCHANTS → owns → STAFF` | 1:1 (owner_user_id) | total / partial | Founding owner |
-| R6  | `MERCHANTS → has → PRODUCTS` | 1:N | partial / total | |
-| R7  | `MERCHANTS → has → CATEGORIES` | 1:N | partial / total | |
-| R8  | `MERCHANTS → has → WAREHOUSES` | 1:N | partial / total | |
-| R9  | `CATEGORIES → subcat → CATEGORIES` | 1:N recursive | partial / partial | Tree |
-| R10 | `PRODUCTS ⟷ CATEGORIES` (bridge) | M:N | partial / partial | |
-| R11 | `PRODUCTS → has → PRODUCT_VARIANTS` (weak/identifying) | 1:N identifying | partial / **total** | |
-| R12 | `STOCKED_AT(PRODUCT × VARIANT × WAREHOUSE)` | **Ternary M:N:N** | partial × partial × partial | Genuine ternary |
-| R13 | `MERCHANTS → has → CARTS` | 1:N | partial / total | |
-| R14 | `CUSTOMER → owns → CARTS` | 1:N | partial / partial | CART side (0,1): guest cart has null `customer_user_id` |
-| R15 | `CARTS ⟷ PRODUCT_VARIANTS` (bridge `cart_items`) | M:N | partial / partial | `quantity` attribute |
-| R16 | `MERCHANTS → has → ORDERS` | 1:N | partial / total | |
-| R17 | `CUSTOMER → places → ORDERS` | 1:N | partial / total | |
-| R18 | `ORDERS → has → ORDER_ITEMS` (weak/identifying) | 1:N identifying | partial / total | |
-| R19 | `PRODUCT_VARIANTS → referenced_by → ORDER_ITEMS` | 1:N | partial / total | |
-| R20 | `ORDERS → has → PAYMENTS` | 1:N | partial / total | |
-| R21 | `ORDERS → has → SHIPMENTS` | 1:N | partial / **total** | `shipments.order_id` NOT NULL — every shipment must belong to an order |
-| R22 | `WAREHOUSES → ships → SHIPMENTS` | 1:N | partial / total | |
-| R23 | `PRODUCTS ← writes → REVIEWS ← by → CUSTOMER` | 1:N + 1:N (via REVIEWS entity) | partial / **total** on both legs | REVIEWS is a full entity (not bridge); `product_id` and `customer_user_id` are NOT NULL → REVIEWS totally participates in both REVIEWED_AS and WRITTEN_BY |
-| R24 | `DISCOUNTS ⟷ ORDERS` (bridge `discount_usages`) | M:N | partial / partial | |
-| R25 | `USERS → actor_of → ACTIVITY_LOG` | 1:N | partial / partial | LOG side (0,1): system events have null `actor_user_id` |
+| R1  | `USERS — IS_A — CUSTOMER` | 1:1 IS_A | (0,1) / (1,1) | Ch07 ER binary; R1/R2/R3 may coexist for one USERS row |
+| R2  | `USERS — IS_A — STAFF` | 1:1 IS_A | (0,1) / (1,1) | Ch07 ER binary |
+| R3  | `USERS — IS_A — PLATFORM_ADMIN` | 1:1 IS_A | (0,1) / (1,1) | Ch07 ER binary |
+| R4  | `STAFF — WORKS_FOR — MERCHANTS` (via `merchant_staff`) | M:N | (0,N) partial / (1,N) **total** (≥1 owner) | Carries `role` attribute |
+| R5  | `STAFF — OWNER_OF — MERCHANTS` | 1:1 (via `merchants.owner_user_id`) | (0,1) partial / (1,1) **total** | Founding owner — every merchant must have one staff owner |
+| R6  | `MERCHANTS — HAS — PRODUCTS` | 1:N | (0,N) partial / (1,1) **total** | |
+| R7  | `MERCHANTS — HAS — CATEGORIES` | 1:N | (0,N) partial / (1,1) **total** | |
+| R8  | `MERCHANTS — HAS — WAREHOUSES` | 1:N | (0,N) partial / (1,1) **total** | |
+| R9  | `CATEGORIES — PARENT_OF — CATEGORIES` | 1:N recursive | (0,N) partial / (0,1) partial | Tree |
+| R10 | `PRODUCTS — CATEGORIZED_IN — CATEGORIES` (bridge `product_categories`) | M:N | (0,N) partial / (0,N) partial | |
+| R11 | `PRODUCTS — HAS_VARIANT — PRODUCT_VARIANTS` (weak/identifying) | 1:N identifying | (0,N) partial / (1,1) **total** | |
+| R12 | `STOCKED_AT (PRODUCTS × PRODUCT_VARIANTS × WAREHOUSES)` | **Ternary M:N:N** | all (0,N) partial | Genuine ternary |
+| R13 | `MERCHANTS — HAS — CARTS` | 1:N | (0,N) partial / (1,1) **total** | |
+| R14 | `CUSTOMER — SHOPS_AT — CARTS` | 1:N | (0,N) partial / (0,1) partial | CART side (0,1): guest cart has null `customer_user_id` |
+| R15 | `CARTS — CART_ITEMS — PRODUCT_VARIANTS` (bridge `cart_items`) | M:N | (0,N) partial / (0,N) partial | `quantity` attribute |
+| R16 | `MERCHANTS — HAS — ORDERS` | 1:N | (0,N) partial / (1,1) **total** | |
+| R17 | `CUSTOMER — PLACES — ORDERS` | 1:N | (0,N) partial / (1,1) **total** | |
+| R18 | `ORDERS — HAS_ITEM — ORDER_ITEMS` (weak/identifying) | 1:N identifying | (0,N) partial / (1,1) **total** | |
+| R19 | `PRODUCT_VARIANTS — REFERENCES — ORDER_ITEMS` | 1:N | (0,N) partial / (1,1) **total** | |
+| R20 | `ORDERS — HAS_PAYMENT — PAYMENTS` | 1:N | (0,N) partial / (1,1) **total** | |
+| R21 | `ORDERS — HAS_SHIPMENT — SHIPMENTS` | 1:N | (0,N) partial / (1,1) **total** | `shipments.order_id` NOT NULL — every shipment must belong to an order |
+| R22 | `WAREHOUSES — SHIPS_FROM — SHIPMENTS` | 1:N | (0,N) partial / (1,1) **total** | |
+| R23  | `PRODUCTS — REVIEWED_AS — REVIEWS` | 1:N | (0,N) partial / (1,1) **total** | REVIEWS is a full entity (not bridge); `product_id` NOT NULL |
+| R23b | `CUSTOMER — WRITTEN_BY — REVIEWS` | 1:N | (0,N) partial / (1,1) **total** | `customer_user_id` NOT NULL — every review has an author |
+| R24 | `DISCOUNTS — APPLIED_TO — ORDERS` (bridge `discount_usages`) | M:N | (0,N) partial / (0,N) partial | |
+| R25 | `USERS — ACTOR_OF — ACTIVITY_LOG` | 1:N | (0,N) partial / (0,1) partial | LOG side (0,1): system events have null `actor_user_id` |
 
 ---
 
@@ -432,60 +429,6 @@ The ER diagram (Phase 2) will draw ~24 relationships. Quick inventory:
 15. **Currency consistency** — an order's `currency` must match `merchants.currency` for that tenant.
 16. **Cart → order transition** — on successful checkout, cart status set to `converted`; cart rows retained for analytics (not deleted).
 
----
 
-## 6. Assumptions
-
-- **One-database-many-tenants**: shared-schema MT; no per-tenant databases or schemas.
-- **MySQL 8.0+** assumed for Phase 4/5 DDL (supports JSON natively, CHECK constraints enforced ≥ 8.0.16, recursive CTEs ≥ 8.0, functional/partial indexes ≥ 8.0). Phase 4 DDL notes: `BOOLEAN` maps to `TINYINT(1)`; prefer `DATETIME` over `TIMESTAMP` for dates beyond 2038; all tables must use `ENGINE=InnoDB` for FK enforcement; deferrable FK constraints are **not available** — insertion order must be managed at the application level.
-- **UTF-8** encoding everywhere; no locale-specific collations beyond default.
-- **Monetary values** stored as `DECIMAL(12,2)` in the merchant's currency (no automatic FX).
-- **Time** stored as UTC `DATETIME`; UI converts to merchant's timezone. (`DATETIME` used over `TIMESTAMP` to avoid the MySQL year-2038 range limit.)
-- **No soft deletes** except where noted (`merchants.suspended_at`, `products.status='archived'`, `users.is_active=FALSE`).
-- **Guest checkout** supported: cart and order allow `customer_user_id` NULL temporarily, but final order must have a non-null customer (account created at checkout if needed).
-- **Authentication** (tokens, sessions) out of scope for Phase 2 — handled at application layer.
-- **Payment gateway integration** is external; StoreCraft stores only `gateway_reference`, never card numbers (PCI-DSS compliance deferred).
-- **No i18n on product data** in Phase 2; `title` is single-locale. Phase 5 may add `product_translations`.
-
----
-
-## 7. Functional Requirements (sample queries for Phase 4)
-
-The schema must support these operations efficiently:
-
-1. **Catalog browse (tenant-filtered):** "List active products in category X, paginated, sorted by price."
-2. **Product detail:** "For product P, return title, variants, images, avg rating, stock-by-warehouse."
-3. **Cart management:** "Add/remove/update line in cart, recompute totals."
-4. **Checkout:** atomic transaction across `cart → order → payment → inventory.reserve → shipment.prepare`.
-5. **Customer order history:** "Last 20 orders for customer C across all merchants they shopped at."
-6. **Merchant dashboard:** "Today's orders, revenue, top 5 products this month, low-stock alerts."
-7. **Inventory query:** "Show stock levels for SKU X across all warehouses of merchant M."
-8. **Discount redemption:** "Validate code C for cart total T, customer U, return discount amount."
-9. **Review feed:** "Product P, published reviews, sorted by helpful_count."
-10. **Audit trail:** "All actions by staff S in last 30 days."
-11. **Tenant-level RLS filter:** every query implicitly starts with `WHERE merchant_id = :current_tenant`.
-
----
-
-## 8. Out of Scope (Phase 2)
-
-Deferred to later phases or excluded entirely:
-
-- **Multi-vendor marketplaces** — a merchant having sub-sellers (Amazon-seller-like).
-- **Product Q&A** — customer-to-merchant questions on product pages.
-- **Customer wishlists / favorites.**
-- **Abandoned-cart email recovery** workflows.
-- **Returns & refund requests** (stored as `payment.status='refunded'`; no full RMA flow).
-- **Gift cards / store credit.**
-- **Tax calculation rules** (stored as flat `tax_total` per order; no tax jurisdiction tables).
-- **Shipping rate engine** (stored as flat `shipping_total`; no zone/weight/carrier-rate tables).
-- **Analytics / reporting denormalized tables** (Phase 5 may introduce materialized views).
-- **Webhooks / external integrations** — Shopify apps equivalent.
-- **Internationalization** of product data (translations).
-- **Search engine** (Elasticsearch, Algolia) — handled outside RDBMS.
-- **Image storage** — files on S3/CDN; DB stores only URLs if added later.
-
----
-
-*End of Phase 1 Data Requirements — built with step-by-step user confirmation.*
+*End of Phase 1*
 
